@@ -1,0 +1,9 @@
+{
+  "name": "Groundsync",
+  "description": "A high-fidelity decision documentation tool for construction sites. Pin decisions on 2D plans, record voice, and manage project-wide construction logic with role-based access.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
