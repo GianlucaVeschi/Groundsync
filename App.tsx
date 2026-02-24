@@ -4,8 +4,10 @@ import { User, Project, Plan, Decision, UserRole, PhaseHOAI } from './types';
 import { db } from './services/storage';
 import { PlanCanvas } from './components/PlanCanvas';
 import { DecisionModal } from './components/DecisionModal';
+import { AuthLandingScreen } from './components/AuthLandingScreen';
+import { SignInScreen } from './components/SignInScreen';
 
-type ViewState = 'projects' | 'project-detail' | 'plan-view';
+type ViewState = 'auth-landing' | 'sign-in' | 'projects' | 'project-detail' | 'plan-view';
 
 const App: React.FC = () => {
   const [state, setState] = useState(db.get());
@@ -17,10 +19,17 @@ const App: React.FC = () => {
   const [showDecisionList, setShowDecisionList] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [signInMode, setSignInMode] = useState<'sign-in' | 'register'>('sign-in');
 
   useEffect(() => {
     db.save(state);
   }, [state]);
+
+  useEffect(() => {
+    if (!state.isAuthenticated) {
+      setView('auth-landing');
+    }
+  }, [state.isAuthenticated]);
 
   // --- Mappings ---
   const activeProject = useMemo(() => 
@@ -142,7 +151,39 @@ const App: React.FC = () => {
     setShowDecisionList(false);
   };
 
+  const handleSignInSuccess = (user: User) => {
+    setState(prev => ({
+      ...prev,
+      currentUser: user,
+      isAuthenticated: true
+    }));
+    setView('projects');
+  };
+
+  const handleLogout = () => {
+    if (confirm('Are you sure you want to log out?')) {
+      const updatedState = db.logout();
+      setState(updatedState);
+      setView('auth-landing');
+    }
+  };
+
   // --- Rendering Helpers ---
+  const renderAuthLanding = () => (
+    <AuthLandingScreen
+      onSignIn={() => { setSignInMode('sign-in'); setView('sign-in'); }}
+      onRegister={() => { setSignInMode('register'); setView('sign-in'); }}
+    />
+  );
+
+  const renderSignIn = () => (
+    <SignInScreen
+      initialMode={signInMode}
+      onSuccess={handleSignInSuccess}
+      onBack={() => setView('auth-landing')}
+    />
+  );
+
   const renderProjectsView = () => (
     <div className="flex flex-col h-full bg-slate-50 p-6 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full">
@@ -151,13 +192,25 @@ const App: React.FC = () => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Projects</h1>
             <p className="text-slate-500 mt-1">Select a project to view plans and decisions.</p>
           </div>
-          <button 
-            onClick={() => setShowCreateProject(true)}
-            className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
-          >
-            <i className="fa-solid fa-plus"></i>
-            New Project
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
+            </div>
+            <button
+              onClick={() => setShowCreateProject(true)}
+              className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+            >
+              <i className="fa-solid fa-plus"></i>
+              New Project
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-white border text-slate-600 font-bold py-3 px-4 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
+            >
+              <i className="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
         </div>
 
         {state.projects.length === 0 ? (
@@ -245,10 +298,24 @@ const App: React.FC = () => {
   const renderProjectDetail = () => (
     <div className="flex flex-col h-full bg-slate-50 p-6 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full">
-        <button onClick={() => setView('projects')} className="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors">
-          <i className="fa-solid fa-arrow-left"></i>
-          Back to Projects
-        </button>
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={() => setView('projects')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors">
+            <i className="fa-solid fa-arrow-left"></i>
+            Back to Projects
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-white border text-slate-600 font-bold py-2 px-4 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
+            >
+              <i className="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
+        </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-sm mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -357,13 +424,22 @@ const App: React.FC = () => {
           />
         )}
         
-        <div className="absolute top-4 left-4 pointer-events-none z-30">
-           <div className="bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs font-black text-slate-800 tracking-tight">
-                {activeProject?.userRole.toUpperCase()}: {state.currentUser.name}
-              </span>
+        <div className="absolute top-4 left-4 z-30 flex flex-col gap-2">
+           <div className="pointer-events-none">
+             <div className="bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-xs font-black text-slate-800 tracking-tight">
+                  {activeProject?.userRole.toUpperCase()}: {state.currentUser.name}
+                </span>
+             </div>
            </div>
+           <button
+             onClick={handleLogout}
+             className="pointer-events-auto bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 text-xs font-black text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+           >
+             <i className="fa-solid fa-right-from-bracket mr-1"></i>
+             LOGOUT
+           </button>
         </div>
       </main>
 
@@ -422,6 +498,8 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen w-screen font-sans">
+      {view === 'auth-landing' && renderAuthLanding()}
+      {view === 'sign-in' && renderSignIn()}
       {view === 'projects' && renderProjectsView()}
       {view === 'project-detail' && renderProjectDetail()}
       {view === 'plan-view' && renderPlanView()}
