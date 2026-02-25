@@ -11,7 +11,7 @@ type ViewState = 'auth-landing' | 'sign-in' | 'projects' | 'project-detail' | 'p
 
 const App: React.FC = () => {
   const [state, setState] = useState(db.get());
-  const [view, setView] = useState<ViewState>('projects');
+  const [view, setView] = useState<ViewState>(db.get().isAuthenticated ? 'projects' : 'auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [activeDecision, setActiveDecision] = useState<Partial<Decision> | null>(null);
