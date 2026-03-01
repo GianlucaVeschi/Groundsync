@@ -463,14 +463,7 @@ const App: React.FC = () => {
 
         {/* Right Sidebar with Controls */}
         <div className="w-24 shrink-0 bg-slate-800 border-l border-slate-700 flex flex-col items-center py-6 gap-4">
-          <button
-            onClick={() => setShowDecisionList(true)}
-            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
-            title="Decision Log"
-          >
-            <i className="fa-solid fa-list-ul text-xl"></i>
-          </button>
-
+          {/* Pin Placement FAB */}
           <button
             onClick={() => setIsPinPlacementMode(!isPinPlacementMode)}
             className={`w-16 h-16 shadow-xl rounded-2xl flex items-center justify-center transition-all active:scale-90 ${
@@ -486,6 +479,16 @@ const App: React.FC = () => {
             </span>
           </button>
 
+          {/* Decision Log */}
+          <button
+            onClick={() => setShowDecisionList(true)}
+            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+            title="Decision Log"
+          >
+            <i className="fa-solid fa-list-ul text-xl"></i>
+          </button>
+
+          {/* Divider */}
           <div className="w-12 h-px bg-slate-600"></div>
 
           <button
