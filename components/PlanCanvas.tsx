@@ -339,6 +339,15 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Loading Spinner */}
+      {!canvasReady && (
+        <div className="absolute inset-0 flex items-center justify-center z-50">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-600 border-t-blue-500"></div>
+            <p className="text-slate-400 font-semibold text-sm">Loading PDF...</p>
+          </div>
+        </div>
+      )}
       <div 
         style={{
           transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
