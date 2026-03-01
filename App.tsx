@@ -571,7 +571,12 @@ const App: React.FC = () => {
                     <h3 className="font-black text-slate-900 text-lg leading-tight mb-1">{d.category}</h3>
                     <p className="text-sm text-slate-600 line-clamp-2">{d.text}</p>
                     <div className="mt-4 flex items-center justify-between border-t pt-3">
-                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">By {d.creatorName}</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        By {d.creatorName}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {d.createdAt ? new Date(d.createdAt).toLocaleString() : '—'}
+                      </span>
                     </div>
                   </div>
                 ))}
