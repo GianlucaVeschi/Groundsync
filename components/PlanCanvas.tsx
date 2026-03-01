@@ -6,7 +6,6 @@ interface PlanCanvasProps {
   pdfData: string;
   decisions: Decision[];
   onAddDecision: (x: number, y: number) => void;
-  onOpenFullDecision: (decision: Decision) => void;
   selectedDecisionId?: string | null;
   onSelectDecision: (decisionId: string | null) => void;
   isPinPlacementMode: boolean;
@@ -20,7 +19,6 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   pdfData,
   decisions,
   onAddDecision,
-  onOpenFullDecision,
   selectedDecisionId,
   onSelectDecision,
   isPinPlacementMode,
@@ -124,24 +122,6 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
       }
     };
   }, [pdfData]);
-
-  // Centering Logic
-  useEffect(() => {
-    if (selectedDecisionId && containerRef.current && canvasRef.current && canvasReady) {
-      const decision = decisions.find(d => d.id === selectedDecisionId);
-      if (decision) {
-        const container = containerRef.current.getBoundingClientRect();
-        const canvas = canvasRef.current;
-        const pinPxX = decision.x * canvas.width;
-        const pinPxY = decision.y * canvas.height;
-
-        const targetX = (container.width / 2) - (pinPxX * transform.scale);
-        const targetY = (container.height / 2) - (pinPxY * transform.scale);
-
-        setTransform(prev => ({ ...prev, x: targetX, y: targetY }));
-      }
-    }
-  }, [selectedDecisionId, canvasReady]);
 
   // Handle zoom triggers from parent
   useEffect(() => {
@@ -336,11 +316,6 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
     }
   };
 
-  const previewDecision = useMemo(() => 
-    decisions.find(d => d.id === selectedDecisionId),
-    [decisions, selectedDecisionId]
-  );
-
   return (
     <div
       ref={containerRef}
@@ -407,41 +382,6 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
                   >
                     <i className="fa-solid fa-location-dot text-sm text-white"></i>
                   </button>
-
-                  {/* ANCHORED POPUP */}
-                  {isHighlighted && (
-                    <div 
-                      className="absolute bottom-10 left-1/2 -translate-x-1/2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-[110] pointer-events-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="p-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{decision.humanId}</span>
-                          <button 
-                            onClick={() => onSelectDecision(null)}
-                            className="text-slate-400 hover:text-slate-600"
-                          >
-                            <i className="fa-solid fa-xmark"></i>
-                          </button>
-                        </div>
-                        <div className="mb-2">
-                          <h4 className="font-black text-slate-900 text-sm leading-tight">{decision.category}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
-                            {decision.creatorName} • {new Date(decision.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <p className="text-xs text-slate-600 line-clamp-3 mb-3">
-                          {decision.text || (decision.media.some(m => m.type === 'audio') ? '(Voice note)' : 'No notes.')}
-                        </p>
-                        <button 
-                          onClick={() => onOpenFullDecision(decision)}
-                          className="w-full bg-blue-600 text-white text-[11px] font-black py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Open decision
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             );

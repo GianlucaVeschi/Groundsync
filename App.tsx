@@ -79,6 +79,15 @@ const App: React.FC = () => {
     [state.decisions, activePlanId]
   );
 
+  const handleSelectDecisionFromCanvas = (decisionId: string | null) => {
+    setSelectedPreviewId(decisionId);
+    if (!decisionId) return;
+    const decision = planDecisions.find(d => d.id === decisionId && !d.deletedAt);
+    if (decision) {
+      setActiveDecision(decision);
+    }
+  };
+
   // --- Handlers ---
   const handleCreateProject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -175,6 +184,7 @@ const App: React.FC = () => {
 
   const handleDecisionListSelect = (decision: Decision) => {
     setActiveDecision(decision);
+    setSelectedPreviewId(decision.id);
     setShowDecisionList(false);
   };
 
@@ -441,8 +451,7 @@ const App: React.FC = () => {
               decisions={planDecisions}
               selectedDecisionId={selectedPreviewId}
               onAddDecision={handleAddDecision}
-              onSelectDecision={setSelectedPreviewId}
-              onOpenFullDecision={setActiveDecision}
+              onSelectDecision={handleSelectDecisionFromCanvas}
               isPinPlacementMode={isPinPlacementMode}
               onSetPinPlacementMode={setIsPinPlacementMode}
               zoomInTrigger={zoomInTrigger}
@@ -454,7 +463,6 @@ const App: React.FC = () => {
 
         {/* Right Sidebar with Controls */}
         <div className="w-24 shrink-0 bg-slate-800 border-l border-slate-700 flex flex-col items-center py-6 gap-4">
-          {/* Decision Log */}
           <button
             onClick={() => setShowDecisionList(true)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
@@ -463,7 +471,6 @@ const App: React.FC = () => {
             <i className="fa-solid fa-list-ul text-xl"></i>
           </button>
 
-          {/* Pin Placement FAB */}
           <button
             onClick={() => setIsPinPlacementMode(!isPinPlacementMode)}
             className={`w-16 h-16 shadow-xl rounded-2xl flex items-center justify-center transition-all active:scale-90 ${
@@ -479,10 +486,8 @@ const App: React.FC = () => {
             </span>
           </button>
 
-          {/* Divider */}
           <div className="w-12 h-px bg-slate-600"></div>
 
-          {/* Zoom Controls */}
           <button
             onClick={() => setZoomInTrigger(prev => prev + 1)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
