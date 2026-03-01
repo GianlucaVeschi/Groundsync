@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Decision, Project, User, UserRole } from '../types';
+import { translateCategory } from '../locales/categoryMapping';
 
 interface DecisionModalProps {
   decision: Partial<Decision>;
@@ -21,6 +23,7 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
   onDelete,
   onAcknowledge
 }) => {
+  const { t, i18n } = useTranslation(['decisions', 'common']);
   const [formData, setFormData] = useState({
     category: decision.category || project.categories[0],
     text: decision.text || '',
@@ -115,10 +118,10 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
         <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white rounded-t-2xl">
           <div>
             <h2 className="text-xl font-bold text-slate-900">
-              {decision.id ? `Decision ${decision.humanId}` : 'New Decision'}
+              {decision.id ? `${t('modal.viewTitle')} ${decision.humanId}` : t('modal.createTitle')}
             </h2>
             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-0.5">
-               Project: {project.name}
+               {project.name}
             </p>
           </div>
           <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 p-2">
@@ -130,17 +133,17 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
           {/* Status Badge */}
           {decision.id && (
             <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-              decision.status === 'Acknowledged' 
-              ? 'bg-green-100 text-green-800 border-green-200' 
+              decision.status === 'Acknowledged'
+              ? 'bg-green-100 text-green-800 border-green-200'
               : 'bg-orange-100 text-orange-800 border-orange-200'
             }`}>
-              {decision.status}
+              {t(`status.${decision.status}`)}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-            <select 
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('modal.categoryLabel')}</label>
+            <select
               className="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 bg-slate-50 border"
               value={formData.category}
               disabled={!isCreator}
@@ -148,16 +151,16 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
               required
             >
               {project.categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{translateCategory(cat, i18n.language as 'en' | 'de')}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Observation / Decision</label>
-            <textarea 
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('modal.descriptionLabel')}</label>
+            <textarea
               className="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 bg-slate-50 border h-32"
-              placeholder="What was decided here?"
+              placeholder={t('modal.descriptionPlaceholder')}
               value={formData.text}
               readOnly={!isCreator}
               onChange={(e) => setFormData({ ...formData, text: e.target.value })}
@@ -176,7 +179,7 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
                   }`}
                 >
                   <i className={`fa-solid ${isRecording ? 'fa-stop' : 'fa-microphone'}`}></i>
-                  {isRecording ? 'Recording...' : 'Voice Note'}
+                  {isRecording ? t('modal.recordingButton') : t('modal.recordButton')}
                 </button>
               )}
 
@@ -190,7 +193,7 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
                 />
                 <div className="w-full py-3 px-4 rounded-xl border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-blue-400">
                   <i className="fa-solid fa-camera"></i>
-                  Photo ({formData.media.length}/3)
+                  {t('modal.photosLabel')} ({formData.media.length}/3)
                 </div>
               </div>
             </div>
@@ -219,7 +222,7 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
           {/* Comments Section (Simplified) */}
           {decision.id && (
             <div className="pt-4 border-t">
-              <h3 className="font-semibold text-slate-800 mb-2">Comments</h3>
+              <h3 className="font-semibold text-slate-800 mb-2">{t('modal.commentsLabel')}</h3>
               <div className="space-y-3 mb-4">
                 {decision.comments.map(c => (
                   <div key={c.id} className="text-sm">
@@ -229,15 +232,15 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
                 ))}
               </div>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  className="flex-1 rounded-lg border p-2 text-sm" 
-                  placeholder="Add a comment..." 
+                <input
+                  type="text"
+                  className="flex-1 rounded-lg border p-2 text-sm"
+                  placeholder={t('modal.commentPlaceholder')}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                        // Simulated logic
                        e.preventDefault();
-                       alert("Comment added (MOCK)");
+                       alert(t('modal.addCommentButton'));
                     }
                   }}
                 />
@@ -248,12 +251,12 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
 
         <div className="p-4 border-t bg-slate-50 flex flex-col sm:flex-row gap-2 rounded-b-2xl sticky bottom-0">
           {isCreator && (
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               onClick={handleSubmit}
               className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700"
             >
-              {decision.id ? 'Save Changes' : 'Submit Decision'}
+              {decision.id ? t('modal.saveButton') : t('modal.saveButton')}
             </button>
           )}
 
@@ -267,26 +270,26 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
               className="flex-1 bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 flex items-center justify-center gap-2"
             >
               <i className="fa-solid fa-check"></i>
-              Acknowledge
+              {t('modal.acknowledgeButton')}
             </button>
           )}
 
           {decision.id && isCreator && (
-            <button 
+            <button
               type="button"
-              onClick={() => { if(confirm('Delete this decision?')) onDelete?.(decision.id!); }}
+              onClick={() => { if(confirm(t('modal.deleteConfirm'))) onDelete?.(decision.id!); }}
               className="sm:w-16 bg-white text-red-500 font-bold py-3 rounded-xl border border-red-200 hover:bg-red-50 flex items-center justify-center"
             >
               <i className="fa-solid fa-trash-can"></i>
             </button>
           )}
-          
-          <button 
+
+          <button
             type="button"
             onClick={onCancel}
             className="flex-1 bg-white text-slate-600 font-bold py-3 rounded-xl border hover:bg-slate-50 sm:hidden"
           >
-            Cancel
+            {t('common:buttons.cancel')}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Decision } from '../types';
 
 const ZOOM_STEP = 1.4;
@@ -30,6 +31,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   zoomOutTrigger = 0,
   recenterTrigger = 0,
 }) => {
+  const { t } = useTranslation('decisions');
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: DEFAULT_HOME_SCALE });
@@ -340,7 +342,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
         <div className="absolute inset-0 flex items-center justify-center z-50">
           <div className="flex flex-col items-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-600 border-t-blue-500"></div>
-            <p className="text-slate-400 font-semibold text-sm">Loading PDF...</p>
+            <p className="text-slate-400 font-semibold text-sm">{t('canvas.loadingPdf')}</p>
           </div>
         </div>
       )}

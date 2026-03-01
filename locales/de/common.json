@@ -1,0 +1,55 @@
+{
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "submit": "Absenden",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "upload": "Hochladen",
+    "download": "Herunterladen",
+    "create": "Erstellen",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "register": "Registrieren"
+  },
+  "userRoles": {
+    "Bauleiter": "Bauleiter",
+    "Bauüberwachung": "Bauüberwachung",
+    "Project Manager": "Projektleiter",
+    "Architect": "Architekt",
+    "Subcontractor": "Subunternehmer",
+    "Auftraggeber": "Auftraggeber"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "completed": "Abgeschlossen"
+  },
+  "navigation": {
+    "projects": "Projekte",
+    "plans": "Pläne",
+    "decisions": "Entscheidungen",
+    "settings": "Einstellungen"
+  },
+  "common": {
+    "name": "Name",
+    "date": "Datum",
+    "description": "Beschreibung",
+    "category": "Kategorie",
+    "status": "Status",
+    "role": "Rolle",
+    "email": "E-Mail",
+    "loading": "Lädt...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren"
+  }
+}

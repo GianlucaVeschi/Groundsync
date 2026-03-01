@@ -1,0 +1,51 @@
+{
+  "list": {
+    "title": "Your Projects",
+    "subtitle": "Manage construction projects and documentation",
+    "createButton": "New Project",
+    "emptyState": "No projects yet. Create your first project to get started.",
+    "viewPlans": "View Plans"
+  },
+  "create": {
+    "title": "Create New Project",
+    "nameLabel": "Project Name",
+    "namePlaceholder": "Riverside Construction",
+    "shortNameLabel": "Short Name (3 chars)",
+    "shortNamePlaceholder": "RIV",
+    "clientLabel": "Client",
+    "clientPlaceholder": "Client Name",
+    "startDateLabel": "Start Date",
+    "phaseLabel": "HOAI Phase",
+    "phasePlaceholder": "Select phase",
+    "roleLabel": "Your Role in Project",
+    "rolePlaceholder": "Select your role",
+    "categoriesLabel": "Decision Categories",
+    "categoriesPlaceholder": "Enter category and press Enter",
+    "submitButton": "Create Project",
+    "cancelButton": "Cancel"
+  },
+  "detail": {
+    "plans": "Plans",
+    "uploadPlan": "Upload PDF Plan",
+    "emptyState": "No plans yet. Upload a PDF plan to start documenting decisions.",
+    "viewDecisions": "View Decisions"
+  },
+  "hoaiPhases": {
+    "LP1": "LP1 - Basic Evaluation",
+    "LP2": "LP2 - Preliminary Planning",
+    "LP3": "LP3 - Draft Planning",
+    "LP4": "LP4 - Approval Planning",
+    "LP5": "LP5 - Execution Planning",
+    "LP6": "LP6 - Preparation for Award",
+    "LP7": "LP7 - Participation in Award",
+    "LP8": "LP8 - Site Supervision",
+    "LP9": "LP9 - Project Management"
+  },
+  "defaultCategories": {
+    "Landscape": "Landscape",
+    "Construction": "Construction",
+    "Irrigation": "Irrigation",
+    "Lighting": "Lighting",
+    "Site Safety": "Site Safety"
+  }
+}

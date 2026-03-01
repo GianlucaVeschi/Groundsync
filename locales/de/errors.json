@@ -1,0 +1,34 @@
+{
+  "storage": {
+    "loadFailed": "Fehler beim Laden der Daten aus dem Speicher",
+    "saveFailed": "Fehler beim Speichern der Daten",
+    "userNotFound": "Benutzer nicht gefunden"
+  },
+  "auth": {
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "userExists": "Benutzer mit dieser E-Mail existiert bereits",
+    "registrationFailed": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "upload": {
+    "fileTooLarge": "Datei ist zu groß. Maximale Größe ist {{maxSize}}MB",
+    "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie eine {{allowedTypes}} hoch",
+    "uploadFailed": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "tooShort": "Muss mindestens {{min}} Zeichen lang sein",
+    "tooLong": "Darf maximal {{max}} Zeichen lang sein",
+    "invalidFormat": "Ungültiges Format"
+  },
+  "network": {
+    "offline": "Sie sind offline. Änderungen werden lokal gespeichert.",
+    "connectionLost": "Verbindung verloren. Verbindung wird wiederhergestellt...",
+    "requestFailed": "Anfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "general": {
+    "somethingWrong": "Etwas ist schief gelaufen",
+    "tryAgain": "Bitte versuchen Sie es erneut",
+    "contactSupport": "Wenn das Problem weiterhin besteht, wenden Sie sich bitte an den Support"
+  }
+}

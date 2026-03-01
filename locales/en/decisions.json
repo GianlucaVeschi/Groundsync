@@ -1,0 +1,56 @@
+{
+  "canvas": {
+    "loadingPdf": "Loading PDF...",
+    "clickToPlace": "Click on the plan to place a decision pin",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetView": "Reset View",
+    "filter": "Filter by category",
+    "allCategories": "All Categories"
+  },
+  "modal": {
+    "createTitle": "New Decision",
+    "editTitle": "Edit Decision",
+    "viewTitle": "Decision Details",
+    "idLabel": "Decision ID",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select category",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Describe the decision...",
+    "voiceNoteLabel": "Voice Note",
+    "recordButton": "Record Voice Note",
+    "recordingButton": "Recording...",
+    "stopButton": "Stop Recording",
+    "photosLabel": "Photos",
+    "uploadPhotoButton": "Upload Photo",
+    "photoLimit": "Maximum 3 photos",
+    "commentsLabel": "Comments",
+    "commentPlaceholder": "Add a comment...",
+    "addCommentButton": "Add Comment",
+    "historyLabel": "History",
+    "noHistory": "No changes yet",
+    "saveButton": "Save Decision",
+    "deleteButton": "Delete Decision",
+    "acknowledgeButton": "Acknowledge Decision",
+    "closeButton": "Close",
+    "deleteConfirm": "Are you sure you want to delete this decision?"
+  },
+  "status": {
+    "Open": "Open",
+    "Acknowledged": "Acknowledged"
+  },
+  "list": {
+    "title": "Decisions",
+    "emptyState": "No decisions yet. Click on the plan to create one.",
+    "filterByCategory": "Filter by category",
+    "filterByStatus": "Filter by status",
+    "allStatuses": "All Statuses",
+    "showDeleted": "Show deleted"
+  },
+  "notifications": {
+    "created": "Decision created successfully",
+    "updated": "Decision updated successfully",
+    "deleted": "Decision deleted successfully",
+    "acknowledged": "Decision acknowledged successfully"
+  }
+}

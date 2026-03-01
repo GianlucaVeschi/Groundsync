@@ -1,15 +1,20 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { User, Project, Plan, Decision, UserRole, PhaseHOAI } from './types';
 import { db } from './services/storage';
 import { PlanCanvas } from './components/PlanCanvas';
 import { DecisionModal } from './components/DecisionModal';
 import { AuthLandingScreen } from './components/AuthLandingScreen';
 import { SignInScreen } from './components/SignInScreen';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import { formatDate, formatDateTime } from './locales/i18n';
+import { translateCategory, getDefaultCategories } from './locales/categoryMapping';
 
 type ViewState = 'auth-landing' | 'sign-in' | 'projects' | 'project-detail' | 'plan-view';
 
 const App: React.FC = () => {
+  const { t, i18n } = useTranslation(['common', 'projects', 'decisions']);
   const [state, setState] = useState(db.get());
   const [view, setView] = useState<ViewState>(db.get().isAuthenticated ? 'projects' : 'auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -101,7 +106,7 @@ const App: React.FC = () => {
       client: formData.get('client') as string,
       phaseHOAI: formData.get('phaseHOAI') as PhaseHOAI,
       userRole: formData.get('userRole') as UserRole,
-      categories: ['Landscape', 'Construction', 'Irrigation', 'Lighting', 'Site Safety']
+      categories: getDefaultCategories(i18n.language as 'en' | 'de')
     };
     setState(prev => ({ ...prev, projects: [...prev.projects, newProject] }));
     setShowCreateProject(false);
@@ -198,7 +203,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to log out?')) {
+    if (confirm(t('common:buttons.signOut') + '?')) {
       const updatedState = db.logout();
       setState(updatedState);
       setView('auth-landing');
@@ -226,10 +231,11 @@ const App: React.FC = () => {
       <div className="max-w-4xl mx-auto w-full">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Projects</h1>
-            <p className="text-slate-500 mt-1">Select a project to view plans and decisions.</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t('projects:list.title')}</h1>
+            <p className="text-slate-500 mt-1">{t('projects:list.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
               <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
@@ -239,7 +245,7 @@ const App: React.FC = () => {
               className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
             >
               <i className="fa-solid fa-plus"></i>
-              New Project
+              {t('projects:list.createButton')}
             </button>
             <button
               onClick={handleLogout}
@@ -253,8 +259,7 @@ const App: React.FC = () => {
         {state.projects.length === 0 ? (
           <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
             <i className="fa-solid fa-folder-open text-5xl text-slate-200 mb-4"></i>
-            <p className="text-slate-600 font-bold text-lg">No projects yet</p>
-            <p className="text-slate-400 text-sm">Create your first project to get started.</p>
+            <p className="text-slate-600 font-bold text-lg">{t('projects:list.emptyState')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,13 +278,13 @@ const App: React.FC = () => {
                   </span>
                 </div>
                 <h2 className="text-xl font-black text-slate-900 mb-1">{p.name}</h2>
-                <p className="text-sm text-slate-500 mb-4">Client: {p.client}</p>
+                <p className="text-sm text-slate-500 mb-4">{p.client}</p>
                 <div className="flex items-center justify-between pt-4 border-t">
                   <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
                     <i className="fa-solid fa-calendar-day"></i>
-                    {new Date(p.startDate).toLocaleDateString()}
+                    {formatDate(p.startDate, i18n.language)}
                   </span>
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{p.userRole}</span>
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t(`common:userRoles.${p.userRole}`)}</span>
                 </div>
               </div>
             ))}
@@ -291,40 +296,40 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <form onSubmit={handleCreateProject} className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 border-b flex justify-between items-center bg-slate-50">
-              <h2 className="text-xl font-black text-slate-900">Create New Project</h2>
+              <h2 className="text-xl font-black text-slate-900">{t('projects:create.title')}</h2>
               <button type="button" onClick={() => setShowCreateProject(false)} className="text-slate-400 hover:text-slate-600"><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Project Name</label>
-                <input name="name" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" placeholder="e.g. Riverside Park" />
+                <label className="block text-xs font-black text-slate-500 uppercase mb-1">{t('projects:create.nameLabel')}</label>
+                <input name="name" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" placeholder={t('projects:create.namePlaceholder')} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-1">Start Date</label>
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-1">{t('projects:create.startDateLabel')}</label>
                   <input name="startDate" type="date" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-1">HOAI Phase</label>
+                  <label className="block text-xs font-black text-slate-500 uppercase mb-1">{t('projects:create.phaseLabel')}</label>
                   <select name="phaseHOAI" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500">
-                    {['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'].map(ph => <option key={ph} value={ph}>{ph}</option>)}
+                    {['LP1','LP2','LP3','LP4','LP5','LP6','LP7','LP8','LP9'].map(ph => <option key={ph} value={ph}>{t(`projects:hoaiPhases.${ph}`)}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Client</label>
-                <input name="client" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" placeholder="e.g. City Council" />
+                <label className="block text-xs font-black text-slate-500 uppercase mb-1">{t('projects:create.clientLabel')}</label>
+                <input name="client" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" placeholder={t('projects:create.clientPlaceholder')} />
               </div>
               <div>
-                <label className="block text-xs font-black text-slate-500 uppercase mb-1">Your Role</label>
+                <label className="block text-xs font-black text-slate-500 uppercase mb-1">{t('projects:create.roleLabel')}</label>
                 <select name="userRole" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500">
-                  {Object.values(UserRole).map(role => <option key={role} value={role}>{role}</option>)}
+                  {Object.values(UserRole).map(role => <option key={role} value={role}>{t(`common:userRoles.${role}`)}</option>)}
                 </select>
               </div>
             </div>
             <div className="p-6 bg-slate-50 flex gap-2">
-              <button type="button" onClick={() => setShowCreateProject(false)} className="flex-1 bg-white border py-3 rounded-xl font-bold text-slate-600">Cancel</button>
-              <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg">Create Project</button>
+              <button type="button" onClick={() => setShowCreateProject(false)} className="flex-1 bg-white border py-3 rounded-xl font-bold text-slate-600">{t('common:buttons.cancel')}</button>
+              <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg">{t('projects:create.submitButton')}</button>
             </div>
           </form>
         </div>
@@ -338,9 +343,10 @@ const App: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <button onClick={() => setView('projects')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors">
             <i className="fa-solid fa-arrow-left"></i>
-            Back to Projects
+            {t('common:buttons.back')}
           </button>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
               <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
@@ -362,7 +368,7 @@ const App: React.FC = () => {
                 <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-1 rounded-lg uppercase">{activeProject?.phaseHOAI}</span>
               </div>
               <h1 className="text-4xl font-black text-slate-900 tracking-tight">{activeProject?.name}</h1>
-              <p className="text-slate-500 mt-2 font-medium">Client: {activeProject?.client} • Role: {activeProject?.userRole}</p>
+              <p className="text-slate-500 mt-2 font-medium">{activeProject?.client} • {t(`common:userRoles.${activeProject?.userRole}`)}</p>
             </div>
             <label className={`
               cursor-pointer flex flex-col items-center gap-2 p-6 border-2 border-dashed rounded-3xl transition-all w-full md:w-64
@@ -370,17 +376,17 @@ const App: React.FC = () => {
             `}>
               <input type="file" className="hidden" accept="application/pdf" onChange={handlePdfUpload} />
               <i className={`fa-solid ${isUploading ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-up'} text-2xl text-blue-600`}></i>
-              <span className="text-sm font-black text-blue-700">{isUploading ? 'Uploading...' : 'Add PDF Plan'}</span>
+              <span className="text-sm font-black text-blue-700">{isUploading ? t('common:common.loading') : t('projects:detail.uploadPlan')}</span>
             </label>
           </div>
         </div>
 
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Project Plans ({projectPlans.length})</h3>
-        
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">{t('projects:detail.plans')} ({projectPlans.length})</h3>
+
         {projectPlans.length === 0 ? (
           <div className="bg-white border-2 border-dashed rounded-3xl p-12 text-center text-slate-400">
             <i className="fa-solid fa-map text-4xl mb-4 opacity-20"></i>
-            <p className="font-bold">No plans uploaded yet.</p>
+            <p className="font-bold">{t('projects:detail.emptyState')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -401,7 +407,7 @@ const App: React.FC = () => {
                     </div>
                     <h4 className="text-lg font-black text-slate-900 mb-1">{p.name}</h4>
                     <div className="flex items-center gap-4 mt-4 text-xs font-bold text-slate-400">
-                      <span className="flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> {count} Decisions</span>
+                      <span className="flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> {count} {t('common:navigation.decisions')}</span>
                     </div>
                   </div>
                 </div>
@@ -427,8 +433,9 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <div className="relative group">
-            <select 
+            <select
               className="text-sm border-2 border-slate-100 bg-white font-bold rounded-xl focus:ring-2 focus:ring-blue-500 py-2 pl-3 pr-8 appearance-none cursor-pointer"
               value={activePlanId || ''}
               onChange={(e) => { setActivePlanId(e.target.value); setSelectedPreviewId(null); }}
@@ -471,7 +478,7 @@ const App: React.FC = () => {
                 ? 'bg-orange-500 ring-4 ring-orange-400/50 animate-pulse'
                 : 'bg-blue-600 hover:bg-blue-700'
             } text-white relative`}
-            title="Place Decision Pin (P)"
+            title={t('decisions:canvas.clickToPlace') + ' (P)'}
           >
             <i className="fa-solid fa-location-dot text-2xl"></i>
             <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow">
@@ -483,7 +490,7 @@ const App: React.FC = () => {
           <button
             onClick={() => setShowDecisionList(true)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
-            title="Decision Log"
+            title={t('decisions:list.title')}
           >
             <i className="fa-solid fa-list-ul text-xl"></i>
           </button>
@@ -494,7 +501,7 @@ const App: React.FC = () => {
           <button
             onClick={() => setZoomInTrigger(prev => prev + 1)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
-            title="Zoom In"
+            title={t('decisions:canvas.zoomIn')}
           >
             <i className="fa-solid fa-plus text-xl"></i>
           </button>
@@ -502,7 +509,7 @@ const App: React.FC = () => {
           <button
             onClick={() => setZoomOutTrigger(prev => prev + 1)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
-            title="Zoom Out"
+            title={t('decisions:canvas.zoomOut')}
           >
             <i className="fa-solid fa-minus text-xl"></i>
           </button>
@@ -510,7 +517,7 @@ const App: React.FC = () => {
           <button
             onClick={() => setRecenterTrigger(prev => prev + 1)}
             className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
-            title="Recenter View"
+            title={t('decisions:canvas.resetView')}
           >
             <i className="fa-solid fa-compress text-xl"></i>
           </button>
@@ -520,7 +527,7 @@ const App: React.FC = () => {
         {isPinPlacementMode && (
           <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-bold text-sm flex items-center gap-2">
             <i className="fa-solid fa-location-dot"></i>
-            <span>Click on plan to place decision pin</span>
+            <span>{t('decisions:canvas.clickToPlace')}</span>
             <button
               onClick={() => setIsPinPlacementMode(false)}
               className="ml-2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
@@ -544,7 +551,7 @@ const App: React.FC = () => {
              className="pointer-events-auto bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 text-xs font-black text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
            >
              <i className="fa-solid fa-right-from-bracket mr-1"></i>
-             LOGOUT
+             {t('common:buttons.signOut').toUpperCase()}
            </button>
         </div>
       </main>
@@ -554,7 +561,7 @@ const App: React.FC = () => {
            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDecisionList(false)}></div>
            <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
               <div className="p-6 border-b flex items-center justify-between">
-                <h2 className="text-2xl font-black tracking-tight">Decision Log</h2>
+                <h2 className="text-2xl font-black tracking-tight">{t('decisions:list.title')}</h2>
                 <button onClick={() => setShowDecisionList(false)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100">
                   <i className="fa-solid fa-xmark"></i>
                 </button>
@@ -573,17 +580,17 @@ const App: React.FC = () => {
                       <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase ${
                         d.status === 'Acknowledged' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                       }`}>
-                        {d.status}
+                        {t(`decisions:status.${d.status}`)}
                       </span>
                     </div>
-                    <h3 className="font-black text-slate-900 text-lg leading-tight mb-1">{d.category}</h3>
+                    <h3 className="font-black text-slate-900 text-lg leading-tight mb-1">{translateCategory(d.category, i18n.language as 'en' | 'de')}</h3>
                     <p className="text-sm text-slate-600 line-clamp-2">{d.text}</p>
                     <div className="mt-4 flex items-center justify-between border-t pt-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        By {d.creatorName}
+                        {d.creatorName}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {d.createdAt ? new Date(d.createdAt).toLocaleString() : '—'}
+                        {d.createdAt ? formatDateTime(d.createdAt, i18n.language) : '—'}
                       </span>
                     </div>
                   </div>

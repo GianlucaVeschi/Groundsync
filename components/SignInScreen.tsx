@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { User, UserRole } from '../types';
 import { db } from '../services/storage';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface SignInScreenProps {
   initialMode: 'sign-in' | 'register';
@@ -14,6 +16,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   onSuccess,
   onBack
 }) => {
+  const { t } = useTranslation(['auth', 'common', 'errors']);
   const [mode, setMode] = useState<'sign-in' | 'register'>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,23 +42,23 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
     // Validation
     if (!formData.email || !formData.password) {
-      setError('All fields are required');
+      setError(t('errors:validation.required'));
       return;
     }
 
     if (!isValidEmail(formData.email)) {
-      setError('Please enter a valid email address');
+      setError(t('auth:validation.emailInvalid'));
       return;
     }
 
     if (!isValidPassword(formData.password)) {
-      setError('Password must be at least 6 characters');
+      setError(t('errors:validation.tooShort', { min: 6 }));
       return;
     }
 
     if (mode === 'register') {
       if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        setError('Please enter your first name and last name');
+        setError(t('auth:validation.nameRequired'));
         return;
       }
     }
@@ -79,10 +82,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
       if (result.success && result.user) {
         onSuccess(result.user);
       } else {
-        setError(result.error || 'An error occurred');
+        setError(result.error || t('errors:general.somethingWrong'));
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError(t('errors:general.somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -100,9 +103,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             <i className="fa-solid fa-arrow-left text-xl"></i>
           </button>
           <h2 className="text-xl font-black text-slate-900">
-            {mode === 'sign-in' ? 'Sign In' : 'Create Account'}
+            {mode === 'sign-in' ? t('auth:signIn.title') : t('auth:register.title')}
           </h2>
-          <div className="w-6"></div> {/* Spacer for centering */}
+          <LanguageSwitcher />
         </div>
 
         {/* Tab Switcher */}
@@ -115,7 +118,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            Sign In
+            {t('auth:signIn.signInTab')}
           </button>
           <button
             onClick={() => { setMode('register'); setError(null); }}
@@ -125,7 +128,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            Register
+            {t('auth:signIn.registerTab')}
           </button>
         </div>
 
@@ -135,7 +138,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             <>
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase mb-1">
-                  First Name
+                  {t('common:common.name')} (First)
                 </label>
                 <input
                   type="text"
@@ -148,7 +151,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase mb-1">
-                  Last Name
+                  {t('common:common.name')} (Last)
                 </label>
                 <input
                   type="text"
@@ -164,14 +167,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
           <div>
             <label className="block text-xs font-black text-slate-500 uppercase mb-1">
-              Email
+              {t('common:common.email')}
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="user@groundsync.com"
+              placeholder={t('auth:signIn.emailPlaceholder')}
               disabled={loading}
             />
           </div>
@@ -203,7 +206,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           {mode === 'register' && (
             <div>
               <label className="block text-xs font-black text-slate-500 uppercase mb-1">
-                Role
+                {t('common:common.role')}
               </label>
               <select
                 value={formData.role}
@@ -212,7 +215,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
                 disabled={loading}
               >
                 {Object.values(UserRole).map(role => (
-                  <option key={role} value={role}>{role}</option>
+                  <option key={role} value={role}>{t(`common:userRoles.${role}`)}</option>
                 ))}
               </select>
             </div>
@@ -236,10 +239,10 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             {loading ? (
               <>
                 <i className="fa-solid fa-spinner fa-spin mr-2"></i>
-                {mode === 'sign-in' ? 'Signing In...' : 'Creating Account...'}
+                {mode === 'sign-in' ? t('common:buttons.signIn') + '...' : t('common:buttons.register') + '...'}
               </>
             ) : (
-              mode === 'sign-in' ? 'Sign In' : 'Create Account'
+              mode === 'sign-in' ? t('auth:signIn.submitButton') : t('auth:register.submitButton')
             )}
           </button>
         </form>

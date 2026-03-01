@@ -1,0 +1,34 @@
+{
+  "storage": {
+    "loadFailed": "Failed to load data from storage",
+    "saveFailed": "Failed to save data to storage",
+    "userNotFound": "User not found"
+  },
+  "auth": {
+    "invalidCredentials": "Invalid email or password",
+    "userExists": "User with this email already exists",
+    "registrationFailed": "Registration failed. Please try again."
+  },
+  "upload": {
+    "fileTooLarge": "File is too large. Maximum size is {{maxSize}}MB",
+    "invalidFileType": "Invalid file type. Please upload a {{allowedTypes}}",
+    "uploadFailed": "Upload failed. Please try again."
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "tooShort": "Must be at least {{min}} characters",
+    "tooLong": "Must be no more than {{max}} characters",
+    "invalidFormat": "Invalid format"
+  },
+  "network": {
+    "offline": "You are offline. Changes will be saved locally.",
+    "connectionLost": "Connection lost. Reconnecting...",
+    "requestFailed": "Request failed. Please try again."
+  },
+  "general": {
+    "somethingWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "contactSupport": "If the problem persists, please contact support"
+  }
+}

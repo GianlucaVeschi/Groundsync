@@ -1,0 +1,51 @@
+{
+  "list": {
+    "title": "Ihre Projekte",
+    "subtitle": "Bauprojekte und Dokumentation verwalten",
+    "createButton": "Neues Projekt",
+    "emptyState": "Noch keine Projekte. Erstellen Sie Ihr erstes Projekt, um zu beginnen.",
+    "viewPlans": "Pläne anzeigen"
+  },
+  "create": {
+    "title": "Neues Projekt erstellen",
+    "nameLabel": "Projektname",
+    "namePlaceholder": "Riverside Bauprojekt",
+    "shortNameLabel": "Kurzname (3 Zeichen)",
+    "shortNamePlaceholder": "RIV",
+    "clientLabel": "Auftraggeber",
+    "clientPlaceholder": "Name des Auftraggebers",
+    "startDateLabel": "Startdatum",
+    "phaseLabel": "HOAI-Phase",
+    "phasePlaceholder": "Phase auswählen",
+    "roleLabel": "Ihre Rolle im Projekt",
+    "rolePlaceholder": "Rolle auswählen",
+    "categoriesLabel": "Entscheidungskategorien",
+    "categoriesPlaceholder": "Kategorie eingeben und Enter drücken",
+    "submitButton": "Projekt erstellen",
+    "cancelButton": "Abbrechen"
+  },
+  "detail": {
+    "plans": "Pläne",
+    "uploadPlan": "PDF-Plan hochladen",
+    "emptyState": "Noch keine Pläne. Laden Sie einen PDF-Plan hoch, um mit der Dokumentation von Entscheidungen zu beginnen.",
+    "viewDecisions": "Entscheidungen anzeigen"
+  },
+  "hoaiPhases": {
+    "LP1": "LP1 - Grundlagenermittlung",
+    "LP2": "LP2 - Vorplanung",
+    "LP3": "LP3 - Entwurfsplanung",
+    "LP4": "LP4 - Genehmigungsplanung",
+    "LP5": "LP5 - Ausführungsplanung",
+    "LP6": "LP6 - Vorbereitung der Vergabe",
+    "LP7": "LP7 - Mitwirkung bei der Vergabe",
+    "LP8": "LP8 - Bauüberwachung",
+    "LP9": "LP9 - Objektbetreuung"
+  },
+  "defaultCategories": {
+    "Landscape": "Landschaftsbau",
+    "Construction": "Bauwesen",
+    "Irrigation": "Bewässerung",
+    "Lighting": "Beleuchtung",
+    "Site Safety": "Arbeitssicherheit"
+  }
+}

@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface AuthLandingScreenProps {
   onSignIn: () => void;
@@ -10,6 +12,7 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
   onSignIn,
   onRegister
 }) => {
+  const { t } = useTranslation(['auth', 'common']);
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-blue-50 via-slate-50 to-slate-100 overflow-y-auto">
       {/* Navigation Bar */}
@@ -19,22 +22,23 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
             <i className="fa-solid fa-map-location-dot text-lg sm:text-2xl text-white"></i>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Groundsync
+            {t('auth:landing.title')}
           </h1>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
           <button
             onClick={onSignIn}
             className="bg-white border-2 border-slate-200 text-slate-700 font-bold py-2 px-3 sm:py-2.5 sm:px-5 rounded-xl shadow-sm hover:border-blue-300 hover:text-blue-600 transition-all whitespace-nowrap text-sm sm:text-base"
           >
-            Sign In
+            {t('common:buttons.signIn')}
           </button>
           <button
             onClick={onRegister}
             className="bg-blue-600 text-white font-bold py-2 px-3 sm:py-2.5 sm:px-5 rounded-xl shadow-lg hover:bg-blue-700 transition-all whitespace-nowrap text-sm sm:text-base"
           >
-            Register
+            {t('common:buttons.register')}
           </button>
         </div>
       </nav>
@@ -43,18 +47,16 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
       <main className="max-w-6xl mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-16">
           <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
-            Construction Decisions,
-            <br />
-            <span className="text-blue-600">Documented Right</span>
+            {t('auth:landing.subtitle')}
           </h2>
           <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-3xl mx-auto mb-12">
-            Pin decisions directly on your 2D PDF plans. Record voice notes, capture photos, and keep everyone on the same page with role-based project management.
+            {t('auth:landing.tagline')}
           </p>
           <button
             onClick={onRegister}
             className="bg-blue-600 text-white font-bold py-5 px-10 rounded-2xl shadow-2xl hover:bg-blue-700 transition-all text-lg hover:scale-105 active:scale-95"
           >
-            Get Started Free
+            {t('auth:landing.cta')}
           </button>
         </div>
 
@@ -64,9 +66,9 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
             <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
               <i className="fa-solid fa-location-dot text-2xl text-blue-600"></i>
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-3">Geo-Located Pins</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-3">{t('auth:landing.features.decisions.title')}</h3>
             <p className="text-slate-600">
-              Click anywhere on your PDF plans to pin decisions exactly where they matter. Visual context at a glance.
+              {t('auth:landing.features.decisions.description')}
             </p>
           </div>
 
@@ -74,9 +76,9 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
             <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
               <i className="fa-solid fa-microphone text-2xl text-blue-600"></i>
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-3">Voice Notes</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-3">{t('auth:landing.features.voice.title')}</h3>
             <p className="text-slate-600">
-              Record decisions on-site with voice transcription powered by AI. No typing required.
+              {t('auth:landing.features.voice.description')}
             </p>
           </div>
 
@@ -84,18 +86,18 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
             <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
               <i className="fa-solid fa-users text-2xl text-blue-600"></i>
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-3">Role-Based Access</h3>
+            <h3 className="text-xl font-black text-slate-900 mb-3">{t('auth:landing.features.roles.title')}</h3>
             <p className="text-slate-600">
-              Manage permissions for Bauleiter, Project Managers, Architects, and more. Everyone stays in sync.
+              {t('auth:landing.features.roles.description')}
             </p>
           </div>
         </div>
 
         {/* Additional Features */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl p-12 text-center text-white shadow-2xl">
-          <h3 className="text-3xl font-black mb-4">Built for Construction Professionals</h3>
+          <h3 className="text-3xl font-black mb-4">{t('auth:landing.features.media.title')}</h3>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Track HOAI phases, categorize decisions, capture photos, and maintain full revision history. Everything you need in one place.
+            {t('auth:landing.features.media.description')}
           </p>
           <div className="flex flex-wrap justify-center gap-8 text-sm font-bold">
             <div className="flex items-center gap-2">
@@ -120,7 +122,7 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
 
       {/* Footer */}
       <footer className="max-w-6xl mx-auto px-6 py-8 text-center text-slate-500 text-sm">
-        <p className="font-medium">Groundsync - Construction Decision Documentation</p>
+        <p className="font-medium">{t('auth:landing.footer')}</p>
       </footer>
     </div>
   );

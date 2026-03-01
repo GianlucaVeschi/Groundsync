@@ -1,0 +1,55 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "upload": "Upload",
+    "download": "Download",
+    "create": "Create",
+    "add": "Add",
+    "remove": "Remove",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "register": "Register"
+  },
+  "userRoles": {
+    "Bauleiter": "Site Manager",
+    "Bauüberwachung": "Construction Supervisor",
+    "Project Manager": "Project Manager",
+    "Architect": "Architect",
+    "Subcontractor": "Subcontractor",
+    "Auftraggeber": "Client"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed"
+  },
+  "navigation": {
+    "projects": "Projects",
+    "plans": "Plans",
+    "decisions": "Decisions",
+    "settings": "Settings"
+  },
+  "common": {
+    "name": "Name",
+    "date": "Date",
+    "description": "Description",
+    "category": "Category",
+    "status": "Status",
+    "role": "Role",
+    "email": "Email",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "canvas": {
+    "loadingPdf": "PDF wird geladen...",
+    "clickToPlace": "Klicken Sie auf den Plan, um eine Entscheidungsmarkierung zu platzieren",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "resetView": "Ansicht zurücksetzen",
+    "filter": "Nach Kategorie filtern",
+    "allCategories": "Alle Kategorien"
+  },
+  "modal": {
+    "createTitle": "Neue Entscheidung",
+    "editTitle": "Entscheidung bearbeiten",
+    "viewTitle": "Entscheidungsdetails",
+    "idLabel": "Entscheidungs-ID",
+    "categoryLabel": "Kategorie",
+    "categoryPlaceholder": "Kategorie auswählen",
+    "descriptionLabel": "Beschreibung",
+    "descriptionPlaceholder": "Beschreiben Sie die Entscheidung...",
+    "voiceNoteLabel": "Sprachnotiz",
+    "recordButton": "Sprachnotiz aufnehmen",
+    "recordingButton": "Aufnahme läuft...",
+    "stopButton": "Aufnahme stoppen",
+    "photosLabel": "Fotos",
+    "uploadPhotoButton": "Foto hochladen",
+    "photoLimit": "Maximal 3 Fotos",
+    "commentsLabel": "Kommentare",
+    "commentPlaceholder": "Kommentar hinzufügen...",
+    "addCommentButton": "Kommentar hinzufügen",
+    "historyLabel": "Verlauf",
+    "noHistory": "Noch keine Änderungen",
+    "saveButton": "Entscheidung speichern",
+    "deleteButton": "Entscheidung löschen",
+    "acknowledgeButton": "Entscheidung bestätigen",
+    "closeButton": "Schließen",
+    "deleteConfirm": "Sind Sie sicher, dass Sie diese Entscheidung löschen möchten?"
+  },
+  "status": {
+    "Open": "Offen",
+    "Acknowledged": "Bestätigt"
+  },
+  "list": {
+    "title": "Entscheidungen",
+    "emptyState": "Noch keine Entscheidungen. Klicken Sie auf den Plan, um eine zu erstellen.",
+    "filterByCategory": "Nach Kategorie filtern",
+    "filterByStatus": "Nach Status filtern",
+    "allStatuses": "Alle Status",
+    "showDeleted": "Gelöschte anzeigen"
+  },
+  "notifications": {
+    "created": "Entscheidung erfolgreich erstellt",
+    "updated": "Entscheidung erfolgreich aktualisiert",
+    "deleted": "Entscheidung erfolgreich gelöscht",
+    "acknowledged": "Entscheidung erfolgreich bestätigt"
+  }
+}
