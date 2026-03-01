@@ -20,6 +20,9 @@ const App: React.FC = () => {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [signInMode, setSignInMode] = useState<'sign-in' | 'register'>('sign-in');
+  const [isPinPlacementMode, setIsPinPlacementMode] = useState(false);
+  const [zoomInTrigger, setZoomInTrigger] = useState(0);
+  const [zoomOutTrigger, setZoomOutTrigger] = useState(0);
 
   useEffect(() => {
     db.save(state);
@@ -30,6 +33,29 @@ const App: React.FC = () => {
       setView('auth-landing');
     }
   }, [state.isAuthenticated]);
+
+  // Keyboard shortcut for pin placement mode (P key) - only in plan view
+  useEffect(() => {
+    if (view !== 'plan-view') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyP' && !e.repeat &&
+          document.activeElement?.tagName !== 'INPUT' &&
+          document.activeElement?.tagName !== 'TEXTAREA') {
+        setIsPinPlacementMode(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [view]);
+
+  // Reset pin mode when leaving plan view
+  useEffect(() => {
+    if (view !== 'plan-view') {
+      setIsPinPlacementMode(false);
+    }
+  }, [view]);
 
   // --- Mappings ---
   const activeProject = useMemo(() => 
@@ -265,7 +291,7 @@ const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase mb-1">Start Date</label>
-                  <input name="startDate" type="date" required className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" />
+                  <input name="startDate" type="date" className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
                   <label className="block text-xs font-black text-slate-500 uppercase mb-1">HOAI Phase</label>
@@ -402,26 +428,88 @@ const App: React.FC = () => {
             </select>
             <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
           </div>
-
-          <button 
-            onClick={() => setShowDecisionList(true)}
-            className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors active:scale-95 shadow-sm"
-          >
-            <i className="fa-solid fa-list-ul"></i>
-          </button>
         </div>
       </header>
 
-      <main className="flex-1 relative bg-slate-900">
-        {activePlan && (
-          <PlanCanvas 
-            pdfData={activePlan.pdfData}
-            decisions={planDecisions}
-            selectedDecisionId={selectedPreviewId}
-            onAddDecision={handleAddDecision}
-            onSelectDecision={setSelectedPreviewId}
-            onOpenFullDecision={setActiveDecision}
-          />
+      <main className="flex-1 flex bg-slate-900 min-w-0">
+        {/* PDF Canvas Area */}
+        <div className="flex-1 relative min-w-0">
+          {activePlan && (
+            <PlanCanvas
+              pdfData={activePlan.pdfData}
+              decisions={planDecisions}
+              selectedDecisionId={selectedPreviewId}
+              onAddDecision={handleAddDecision}
+              onSelectDecision={setSelectedPreviewId}
+              onOpenFullDecision={setActiveDecision}
+              isPinPlacementMode={isPinPlacementMode}
+              onSetPinPlacementMode={setIsPinPlacementMode}
+              zoomInTrigger={zoomInTrigger}
+              zoomOutTrigger={zoomOutTrigger}
+            />
+          )}
+        </div>
+
+        {/* Right Sidebar with Controls */}
+        <div className="w-24 shrink-0 bg-slate-800 border-l border-slate-700 flex flex-col items-center py-6 gap-4">
+          {/* Decision Log */}
+          <button
+            onClick={() => setShowDecisionList(true)}
+            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+            title="Decision Log"
+          >
+            <i className="fa-solid fa-list-ul text-xl"></i>
+          </button>
+
+          {/* Pin Placement FAB */}
+          <button
+            onClick={() => setIsPinPlacementMode(!isPinPlacementMode)}
+            className={`w-16 h-16 shadow-xl rounded-2xl flex items-center justify-center transition-all active:scale-90 ${
+              isPinPlacementMode
+                ? 'bg-orange-500 ring-4 ring-orange-400/50 animate-pulse'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white relative`}
+            title="Place Decision Pin (P)"
+          >
+            <i className="fa-solid fa-location-dot text-2xl"></i>
+            <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow">
+              P
+            </span>
+          </button>
+
+          {/* Divider */}
+          <div className="w-12 h-px bg-slate-600"></div>
+
+          {/* Zoom Controls */}
+          <button
+            onClick={() => setZoomInTrigger(prev => prev + 1)}
+            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+            title="Zoom In"
+          >
+            <i className="fa-solid fa-plus text-xl"></i>
+          </button>
+
+          <button
+            onClick={() => setZoomOutTrigger(prev => prev + 1)}
+            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+            title="Zoom Out"
+          >
+            <i className="fa-solid fa-minus text-xl"></i>
+          </button>
+        </div>
+
+        {/* Pin Placement Mode Banner */}
+        {isPinPlacementMode && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-6 py-3 rounded-full shadow-2xl z-50 font-bold text-sm flex items-center gap-2">
+            <i className="fa-solid fa-location-dot"></i>
+            <span>Click on plan to place decision pin</span>
+            <button
+              onClick={() => setIsPinPlacementMode(false)}
+              className="ml-2 w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+            >
+              <i className="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
         )}
         
         <div className="absolute top-4 left-4 z-30 flex flex-col gap-2">

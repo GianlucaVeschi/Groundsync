@@ -9,6 +9,10 @@ interface PlanCanvasProps {
   onOpenFullDecision: (decision: Decision) => void;
   selectedDecisionId?: string | null;
   onSelectDecision: (decisionId: string | null) => void;
+  isPinPlacementMode: boolean;
+  onSetPinPlacementMode: (value: boolean) => void;
+  zoomInTrigger?: number;
+  zoomOutTrigger?: number;
 }
 
 export const PlanCanvas: React.FC<PlanCanvasProps> = ({
@@ -18,6 +22,10 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   onOpenFullDecision,
   selectedDecisionId,
   onSelectDecision,
+  isPinPlacementMode,
+  onSetPinPlacementMode,
+  zoomInTrigger = 0,
+  zoomOutTrigger = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -25,33 +33,87 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const [canvasReady, setCanvasReady] = useState(false);
+  const [touchPoints, setTouchPoints] = useState<TouchList | null>(null);
+  const [initialDistance, setInitialDistance] = useState<number | null>(null);
+  const [touchStartTime, setTouchStartTime] = useState<number>(0);
+
+  const placePinAtClientPoint = (clientX: number, clientY: number) => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const rect = container.getBoundingClientRect();
+    const pdfX = (clientX - rect.left - transform.x) / transform.scale;
+    const pdfY = (clientY - rect.top - transform.y) / transform.scale;
+
+    const normalizedX = pdfX / canvas.width;
+    const normalizedY = pdfY / canvas.height;
+
+    if (normalizedX >= 0 && normalizedX <= 1 && normalizedY >= 0 && normalizedY <= 1) {
+      onAddDecision(normalizedX, normalizedY);
+      onSetPinPlacementMode(false); // Auto-exit after placement
+    }
+  };
 
   // Render PDF to Canvas
   useEffect(() => {
+    let isCancelled = false;
+    let renderTask: any = null;
+
     const renderPdf = async () => {
+      console.log('[PlanCanvas] renderPdf called', { hasPdfData: !!pdfData, hasCanvas: !!canvasRef.current });
       if (!pdfData || !canvasRef.current) return;
       try {
+        console.log('[PlanCanvas] Loading PDF...');
         const loadingTask = (window as any).pdfjsLib.getDocument({ data: atob(pdfData.split(',')[1]) });
         const pdf = await loadingTask.promise;
+        console.log('[PlanCanvas] PDF loaded, pages:', pdf.numPages);
+
+        if (isCancelled) return;
+
         const page = await pdf.getPage(1);
-        
+
+        if (isCancelled) return;
+
         const viewport = page.getViewport({ scale: 2.0 });
         const canvas = canvasRef.current;
+
+        if (!canvas || isCancelled) return;
+
         const context = canvas.getContext('2d');
-        
+
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
-        await page.render({
+        renderTask = page.render({
           canvasContext: context,
           viewport: viewport
-        }).promise;
-        setCanvasReady(true);
+        });
+
+        await renderTask.promise;
+
+        if (!isCancelled) {
+          setCanvasReady(true);
+        }
       } catch (err) {
-        console.error("PDF Render Error:", err);
+        if (!isCancelled && err.name !== 'RenderingCancelledException') {
+          console.error("PDF Render Error:", err);
+        }
       }
     };
+
     renderPdf();
+
+    return () => {
+      isCancelled = true;
+      if (renderTask) {
+        try {
+          renderTask.cancel();
+        } catch (e) {
+          // Ignore cancellation errors
+        }
+      }
+    };
   }, [pdfData]);
 
   // Centering Logic
@@ -63,18 +125,33 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
         const canvas = canvasRef.current;
         const pinPxX = decision.x * canvas.width;
         const pinPxY = decision.y * canvas.height;
-        
+
         const targetX = (container.width / 2) - (pinPxX * transform.scale);
         const targetY = (container.height / 2) - (pinPxY * transform.scale);
-        
+
         setTransform(prev => ({ ...prev, x: targetX, y: targetY }));
       }
     }
   }, [selectedDecisionId, canvasReady]);
 
+  // Handle zoom triggers from parent
+  useEffect(() => {
+    if (zoomInTrigger > 0) {
+      setTransform(prev => ({ ...prev, scale: prev.scale * 1.4 }));
+    }
+  }, [zoomInTrigger]);
+
+  useEffect(() => {
+    if (zoomOutTrigger > 0) {
+      setTransform(prev => ({ ...prev, scale: prev.scale / 1.4 }));
+    }
+  }, [zoomOutTrigger]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
     setLastPos({ x: e.clientX, y: e.clientY });
+    if (!isPinPlacementMode) {
+      setIsDragging(true);
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -107,24 +184,137 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    const moveDist = Math.sqrt(Math.pow(e.clientX - lastPos.x, 2) + Math.pow(e.clientY - lastPos.y, 2));
-    if (moveDist > 5) return;
-
-    const container = containerRef.current;
-    const canvas = canvasRef.current;
-    if (!container || !canvas) return;
-
-    const rect = container.getBoundingClientRect();
-    const pdfX = (e.clientX - rect.left - transform.x) / transform.scale;
-    const pdfY = (e.clientY - rect.top - transform.y) / transform.scale;
-    
-    const normalizedX = pdfX / canvas.width;
-    const normalizedY = pdfY / canvas.height;
-    
-    if (normalizedX >= 0 && normalizedX <= 1 && normalizedY >= 0 && normalizedY <= 1) {
-      onAddDecision(normalizedX, normalizedY);
+    if (isPinPlacementMode) {
+      placePinAtClientPoint(e.clientX, e.clientY);
     } else {
+      const moveDist = Math.sqrt(Math.pow(e.clientX - lastPos.x, 2) + Math.pow(e.clientY - lastPos.y, 2));
+      if (moveDist > 5) return; // Was a drag, not a click
+
+      // Not in pin mode - deselect any selected pin
       onSelectDecision(null);
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (!isPinPlacementMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    placePinAtClientPoint(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touches = e.touches;
+
+    if (touches.length === 1) {
+      // Single touch - potential tap for pin placement
+      setLastPos({ x: touches[0].clientX, y: touches[0].clientY });
+      setTouchStartTime(Date.now());
+    } else if (touches.length === 2) {
+      // Two fingers - pan or pinch
+      e.preventDefault();
+      setTouchPoints(touches);
+      setIsDragging(true);
+
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      setInitialDistance(Math.sqrt(dx * dx + dy * dy));
+
+      const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+      const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+      setLastPos({ x: centerX, y: centerY });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touches = e.touches;
+
+    if (touches.length === 2 && touchPoints && initialDistance) {
+      e.preventDefault();
+
+      // Calculate current center point
+      const currentCenterX = (touches[0].clientX + touches[1].clientX) / 2;
+      const currentCenterY = (touches[0].clientY + touches[1].clientY) / 2;
+
+      // Pan: move based on center point delta
+      const dx = currentCenterX - lastPos.x;
+      const dy = currentCenterY - lastPos.y;
+
+      // Pinch zoom: calculate distance change
+      const currentDx = touches[0].clientX - touches[1].clientX;
+      const currentDy = touches[0].clientY - touches[1].clientY;
+      const currentDistance = Math.sqrt(currentDx * currentDx + currentDy * currentDy);
+      const scaleChange = currentDistance / initialDistance;
+
+      setTransform(prev => {
+        const newScale = Math.min(Math.max(prev.scale * scaleChange, 0.15), 5);
+
+        // Zoom toward pinch center point
+        const container = containerRef.current;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          const zoomCenterX = currentCenterX - rect.left;
+          const zoomCenterY = currentCenterY - rect.top;
+
+          // Calculate offset adjustment for zoom
+          const offsetX = (zoomCenterX - prev.x) / prev.scale;
+          const offsetY = (zoomCenterY - prev.y) / prev.scale;
+
+          return {
+            scale: newScale,
+            x: zoomCenterX - offsetX * newScale + dx,
+            y: zoomCenterY - offsetY * newScale + dy
+          };
+        }
+
+        return { ...prev, x: prev.x + dx, y: prev.y + dy, scale: newScale };
+      });
+
+      setLastPos({ x: currentCenterX, y: currentCenterY });
+      setInitialDistance(currentDistance);
+      setTouchPoints(touches);
+    } else if (touches.length === 1 && !isPinPlacementMode) {
+      // Single finger drag in pan mode (when not placing pins)
+      const dx = touches[0].clientX - lastPos.x;
+      const dy = touches[0].clientY - lastPos.y;
+      setTransform(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+      setLastPos({ x: touches[0].clientX, y: touches[0].clientY });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 0) {
+      // All fingers lifted
+      const endPos = {
+        x: e.changedTouches[0].clientX,
+        y: e.changedTouches[0].clientY
+      };
+      const moveDist = Math.sqrt(
+        Math.pow(endPos.x - lastPos.x, 2) + Math.pow(endPos.y - lastPos.y, 2)
+      );
+      const touchDuration = Date.now() - touchStartTime;
+
+      // Was a tap (not a drag) and in pin placement mode
+      if (moveDist < 10 && touchDuration < 300 && isPinPlacementMode) {
+        const container = containerRef.current;
+        const canvas = canvasRef.current;
+        if (container && canvas) {
+          const rect = container.getBoundingClientRect();
+          const pdfX = (endPos.x - rect.left - transform.x) / transform.scale;
+          const pdfY = (endPos.y - rect.top - transform.y) / transform.scale;
+          const normalizedX = pdfX / canvas.width;
+          const normalizedY = pdfY / canvas.height;
+
+          if (normalizedX >= 0 && normalizedX <= 1 && normalizedY >= 0 && normalizedY <= 1) {
+            onAddDecision(normalizedX, normalizedY);
+            onSetPinPlacementMode(false); // Auto-exit
+          }
+        }
+      }
+
+      setIsDragging(false);
+      setTouchPoints(null);
+      setInitialDistance(null);
+      setTouchStartTime(0);
     }
   };
 
@@ -134,14 +324,20 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   );
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="w-full h-full bg-slate-900 overflow-hidden cursor-crosshair select-none relative"
+      className={`w-full h-full min-w-0 min-h-0 bg-slate-900 overflow-hidden select-none relative ${
+        isPinPlacementMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div 
         style={{
@@ -224,22 +420,6 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
             );
           })}
         </div>
-      </div>
-
-      {/* ZOOM CONTROLS */}
-      <div className="absolute top-6 right-6 flex flex-col gap-2 z-30">
-        <button 
-          onClick={(e) => { e.stopPropagation(); setTransform(prev => ({ ...prev, scale: prev.scale * 1.4 })); }}
-          className="w-12 h-12 bg-white shadow-lg rounded-xl flex items-center justify-center text-slate-800 active:scale-90 pointer-events-auto"
-        >
-          <i className="fa-solid fa-plus text-lg"></i>
-        </button>
-        <button 
-          onClick={(e) => { e.stopPropagation(); setTransform(prev => ({ ...prev, scale: prev.scale / 1.4 })); }}
-          className="w-12 h-12 bg-white shadow-lg rounded-xl flex items-center justify-center text-slate-800 active:scale-90 pointer-events-auto"
-        >
-          <i className="fa-solid fa-minus text-lg"></i>
-        </button>
       </div>
     </div>
   );
