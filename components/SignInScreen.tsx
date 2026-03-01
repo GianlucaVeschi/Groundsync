@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { db } from '../services/storage';
 
@@ -19,11 +19,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Hardcode demo credentials on localhost
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    email: '',
-    password: '',
+    email: isLocalhost ? 'demo@groundsync.com' : '',
+    password: isLocalhost ? 'password123' : '',
     role: UserRole.BAULEITER
   });
 
