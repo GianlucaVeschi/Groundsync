@@ -13,6 +13,7 @@ interface PlanCanvasProps {
   onSetPinPlacementMode: (value: boolean) => void;
   zoomInTrigger?: number;
   zoomOutTrigger?: number;
+  recenterTrigger?: number;
 }
 
 export const PlanCanvas: React.FC<PlanCanvasProps> = ({
@@ -26,6 +27,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   onSetPinPlacementMode,
   zoomInTrigger = 0,
   zoomOutTrigger = 0,
+  recenterTrigger = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -36,6 +38,8 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   const [touchPoints, setTouchPoints] = useState<TouchList | null>(null);
   const [initialDistance, setInitialDistance] = useState<number | null>(null);
   const [touchStartTime, setTouchStartTime] = useState<number>(0);
+  const initialTransformRef = useRef<{ x: number; y: number; scale: number } | null>(null);
+  const initialTransformPdfRef = useRef<string | null>(null);
 
   const placePinAtClientPoint = (clientX: number, clientY: number) => {
     const container = containerRef.current;
@@ -61,13 +65,10 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
     let renderTask: any = null;
 
     const renderPdf = async () => {
-      console.log('[PlanCanvas] renderPdf called', { hasPdfData: !!pdfData, hasCanvas: !!canvasRef.current });
       if (!pdfData || !canvasRef.current) return;
       try {
-        console.log('[PlanCanvas] Loading PDF...');
         const loadingTask = (window as any).pdfjsLib.getDocument({ data: atob(pdfData.split(',')[1]) });
         const pdf = await loadingTask.promise;
-        console.log('[PlanCanvas] PDF loaded, pages:', pdf.numPages);
 
         if (isCancelled) return;
 
@@ -94,6 +95,14 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
 
         if (!isCancelled) {
           setCanvasReady(true);
+          // Save an initial "home" view per PDF so recenter is deterministic.
+          // This intentionally uses a simple, safe default (top-left at 0,0)
+          // rather than trying to auto-fit/center (which can be fragile).
+          if (initialTransformPdfRef.current !== pdfData) {
+            initialTransformPdfRef.current = pdfData;
+            initialTransformRef.current = { x: 0, y: 0, scale: 0.8 };
+            setTransform(initialTransformRef.current);
+          }
         }
       } catch (err) {
         if (!isCancelled && err.name !== 'RenderingCancelledException') {
@@ -146,6 +155,15 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
       setTransform(prev => ({ ...prev, scale: prev.scale / 1.4 }));
     }
   }, [zoomOutTrigger]);
+
+  useEffect(() => {
+    if (recenterTrigger <= 0) return;
+    if (!canvasReady) return;
+    const home = initialTransformRef.current;
+    if (!home) return;
+    setIsDragging(false);
+    setTransform(home);
+  }, [recenterTrigger]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setLastPos({ x: e.clientX, y: e.clientY });

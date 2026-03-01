@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [isPinPlacementMode, setIsPinPlacementMode] = useState(false);
   const [zoomInTrigger, setZoomInTrigger] = useState(0);
   const [zoomOutTrigger, setZoomOutTrigger] = useState(0);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
 
   useEffect(() => {
     db.save(state);
@@ -446,6 +447,7 @@ const App: React.FC = () => {
               onSetPinPlacementMode={setIsPinPlacementMode}
               zoomInTrigger={zoomInTrigger}
               zoomOutTrigger={zoomOutTrigger}
+              recenterTrigger={recenterTrigger}
             />
           )}
         </div>
@@ -495,6 +497,14 @@ const App: React.FC = () => {
             title="Zoom Out"
           >
             <i className="fa-solid fa-minus text-xl"></i>
+          </button>
+
+          <button
+            onClick={() => setRecenterTrigger(prev => prev + 1)}
+            className="w-14 h-14 bg-slate-700 hover:bg-slate-600 shadow-lg rounded-xl flex items-center justify-center text-white active:scale-90 transition-all"
+            title="Recenter View"
+          >
+            <i className="fa-solid fa-compress text-xl"></i>
           </button>
         </div>
 
