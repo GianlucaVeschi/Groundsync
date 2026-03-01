@@ -14,25 +14,25 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
     <div className="h-screen w-screen bg-gradient-to-br from-blue-50 via-slate-50 to-slate-100 overflow-y-auto">
       {/* Navigation Bar */}
       <nav className="w-full px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-2xl shadow-lg">
-            <i className="fa-solid fa-map-location-dot text-2xl text-white"></i>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12 bg-blue-600 rounded-xl sm:rounded-2xl shadow-lg">
+            <i className="fa-solid fa-map-location-dot text-lg sm:text-2xl text-white"></i>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Groundsync
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onSignIn}
-            className="bg-white border-2 border-slate-200 text-slate-700 font-bold py-2.5 px-5 rounded-xl shadow-sm hover:border-blue-300 hover:text-blue-600 transition-all"
+            className="bg-white border-2 border-slate-200 text-slate-700 font-bold py-2 px-3 sm:py-2.5 sm:px-5 rounded-xl shadow-sm hover:border-blue-300 hover:text-blue-600 transition-all whitespace-nowrap text-sm sm:text-base"
           >
             Sign In
           </button>
           <button
             onClick={onRegister}
-            className="bg-blue-600 text-white font-bold py-2.5 px-5 rounded-xl shadow-lg hover:bg-blue-700 transition-all"
+            className="bg-blue-600 text-white font-bold py-2 px-3 sm:py-2.5 sm:px-5 rounded-xl shadow-lg hover:bg-blue-700 transition-all whitespace-nowrap text-sm sm:text-base"
           >
             Register
           </button>
