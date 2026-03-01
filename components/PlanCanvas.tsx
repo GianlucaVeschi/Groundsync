@@ -2,6 +2,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Decision } from '../types';
 
+const ZOOM_STEP = 1.4;
+const DEFAULT_HOME_SCALE = 0.8 / (ZOOM_STEP * ZOOM_STEP); // same as clicking "Zoom Out" twice
+
 interface PlanCanvasProps {
   pdfData: string;
   decisions: Decision[];
@@ -29,7 +32,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 0.8 });
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: DEFAULT_HOME_SCALE });
   const [isDragging, setIsDragging] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const [canvasReady, setCanvasReady] = useState(false);
@@ -98,7 +101,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
           // rather than trying to auto-fit/center (which can be fragile).
           if (initialTransformPdfRef.current !== pdfData) {
             initialTransformPdfRef.current = pdfData;
-            initialTransformRef.current = { x: 0, y: 0, scale: 0.8 };
+            initialTransformRef.current = { x: 0, y: 0, scale: DEFAULT_HOME_SCALE };
             setTransform(initialTransformRef.current);
           }
         }
@@ -126,13 +129,13 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   // Handle zoom triggers from parent
   useEffect(() => {
     if (zoomInTrigger > 0) {
-      setTransform(prev => ({ ...prev, scale: prev.scale * 1.4 }));
+      setTransform(prev => ({ ...prev, scale: prev.scale * ZOOM_STEP }));
     }
   }, [zoomInTrigger]);
 
   useEffect(() => {
     if (zoomOutTrigger > 0) {
-      setTransform(prev => ({ ...prev, scale: prev.scale / 1.4 }));
+      setTransform(prev => ({ ...prev, scale: prev.scale / ZOOM_STEP }));
     }
   }, [zoomOutTrigger]);
 
