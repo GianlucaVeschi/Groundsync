@@ -74,7 +74,13 @@ export const db = {
     return DEFAULT_STATE;
   },
   save: (state: DbState) => {
-    localStorage.setItem(DB_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(DB_KEY, JSON.stringify(state));
+    } catch (err) {
+      // Most commonly QuotaExceededError when storing base64 media.
+      // Don't crash the app; log so the UI can keep working.
+      console.error('[db.save] Failed to persist state to localStorage.', err);
+    }
   },
   reset: () => {
     localStorage.removeItem(DB_KEY);

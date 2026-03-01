@@ -55,17 +55,57 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
     }, 2000);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const compressImageToDataUrl = (file: File, maxDim = 1600, quality = 0.78): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          media: [...prev.media, { id: Math.random().toString(), type: 'image', url: reader.result as string }]
-        }));
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const { width, height } = img;
+          const scale = Math.min(1, maxDim / Math.max(width, height));
+          const targetW = Math.max(1, Math.round(width * scale));
+          const targetH = Math.max(1, Math.round(height * scale));
+
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas 2D context unavailable'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+
+          // JPEG is significantly smaller than PNG for photos.
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    // Allow selecting the same file twice in a row
+    input.value = '';
+
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (formData.media.length >= 3) return;
+
+    try {
+      const url = await compressImageToDataUrl(file);
+      setFormData(prev => ({
+        ...prev,
+        media: [...prev.media, { id: Math.random().toString(), type: 'image', url }]
+      }));
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      alert('Could not process this image. Please try a different file.');
     }
   };
 
