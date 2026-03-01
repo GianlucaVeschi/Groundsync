@@ -258,9 +258,12 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
           )}
 
           {decision.id && canAck && decision.status !== 'Acknowledged' && (
-            <button 
+            <button
               type="button"
-              onClick={() => onAcknowledge?.(decision.id!)}
+              onClick={() => {
+                onAcknowledge?.(decision.id!);
+                onCancel();
+              }}
               className="flex-1 bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 flex items-center justify-center gap-2"
             >
               <i className="fa-solid fa-check"></i>
