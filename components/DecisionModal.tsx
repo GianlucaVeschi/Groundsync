@@ -28,8 +28,19 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
   });
 
   const [isRecording, setIsRecording] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const isCreator = !decision.id || decision.creatorId === user.id;
   const canAck = [UserRole.BAULEITER, UserRole.PROJECT_MANAGER, UserRole.ARCHITECT].includes(user.role);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,22 +127,24 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
 
           {isCreator && (
             <div className="flex gap-2">
-              <button 
-                type="button"
-                onClick={simulateVoice}
-                className={`flex-1 py-3 px-4 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
-                  isRecording ? 'border-red-500 bg-red-50 text-red-600 animate-pulse' : 'border-slate-200 hover:border-blue-400'
-                }`}
-              >
-                <i className={`fa-solid ${isRecording ? 'fa-stop' : 'fa-microphone'}`}></i>
-                {isRecording ? 'Recording...' : 'Voice Note'}
-              </button>
-              
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={simulateVoice}
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${
+                    isRecording ? 'border-red-500 bg-red-50 text-red-600 animate-pulse' : 'border-slate-200 hover:border-blue-400'
+                  }`}
+                >
+                  <i className={`fa-solid ${isRecording ? 'fa-stop' : 'fa-microphone'}`}></i>
+                  {isRecording ? 'Recording...' : 'Voice Note'}
+                </button>
+              )}
+
               <div className="flex-1 relative">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
                   onChange={handleFileUpload}
                   disabled={formData.media.length >= 3}
                 />
