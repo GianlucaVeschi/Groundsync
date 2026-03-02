@@ -119,11 +119,6 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="max-w-6xl mx-auto px-6 py-8 text-center text-slate-500 text-sm">
-        <p className="font-medium">{t('auth:landing.footer')}</p>
-      </footer>
     </div>
   );
 };
