@@ -106,7 +106,7 @@ export const AuthLandingScreen: React.FC<AuthLandingScreenProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <i className="fa-solid fa-check-circle text-blue-200"></i>
-              <span>Photo Documentation</span>
+              <span>PDF and JPG Documentation</span>
             </div>
             <div className="flex items-center gap-2">
               <i className="fa-solid fa-check-circle text-blue-200"></i>
