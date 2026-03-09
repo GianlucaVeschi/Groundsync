@@ -15,8 +15,10 @@ type ViewState = 'auth-landing' | 'sign-in' | 'projects' | 'project-detail' | 'p
 
 const App: React.FC = () => {
   const { t, i18n } = useTranslation(['common', 'projects', 'decisions']);
+  // undefined = auth loading, null = signed out, User = signed in
+  const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [state, setState] = useState(db.get());
-  const [view, setView] = useState<ViewState>(db.get().isAuthenticated ? 'projects' : 'auth-landing');
+  const [view, setView] = useState<ViewState>('auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [activeDecision, setActiveDecision] = useState<Partial<Decision> | null>(null);
@@ -34,11 +36,14 @@ const App: React.FC = () => {
     db.save(state);
   }, [state]);
 
+  // Firebase auth state listener — drives navigation
   useEffect(() => {
-    if (!state.isAuthenticated) {
-      setView('auth-landing');
-    }
-  }, [state.isAuthenticated]);
+    const unsubscribe = db.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      setView(user ? 'projects' : 'auth-landing');
+    });
+    return unsubscribe;
+  }, []);
 
   // Keyboard shortcut for pin placement mode (P key) - only in plan view
   useEffect(() => {
@@ -138,8 +143,8 @@ const App: React.FC = () => {
     setActiveDecision({
       projectId: activeProjectId,
       planId: activePlanId,
-      creatorId: state.currentUser.id,
-      creatorName: state.currentUser.name,
+      creatorId: currentUser!.id,
+      creatorName: currentUser!.name,
       x,
       y,
       media: [],
@@ -156,8 +161,8 @@ const App: React.FC = () => {
           d.id === activeDecision.id 
           ? { ...d, ...data, history: [...d.history, { 
               id: Math.random().toString(), 
-              userId: state.currentUser.id, 
-              userName: state.currentUser.name, 
+              userId: currentUser!.id,
+              userName: currentUser!.name,
               timestamp: Date.now(), 
               changes: [{ field: 'text', oldValue: d.text, newValue: data.text }] 
             }]} 
@@ -193,20 +198,14 @@ const App: React.FC = () => {
     setShowDecisionList(false);
   };
 
-  const handleSignInSuccess = (user: User) => {
-    setState(prev => ({
-      ...prev,
-      currentUser: user,
-      isAuthenticated: true
-    }));
-    setView('projects');
+  const handleSignInSuccess = (_user: User) => {
+    // Navigation is handled by the onAuthStateChanged listener
   };
 
   const handleLogout = () => {
     if (confirm(t('common:buttons.signOut') + '?')) {
-      const updatedState = db.logout();
-      setState(updatedState);
-      setView('auth-landing');
+      db.logout();
+      // Navigation is handled by the onAuthStateChanged listener
     }
   };
 
@@ -238,7 +237,7 @@ const App: React.FC = () => {
             <LanguageSwitcher />
             <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
+              <span className="text-xs font-bold text-slate-600">{currentUser?.name}</span>
             </div>
             <button
               onClick={() => setShowCreateProject(true)}
@@ -349,7 +348,7 @@ const App: React.FC = () => {
             <LanguageSwitcher />
             <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs font-bold text-slate-600">{state.currentUser.name}</span>
+              <span className="text-xs font-bold text-slate-600">{currentUser?.name}</span>
             </div>
             <button
               onClick={handleLogout}
@@ -542,7 +541,7 @@ const App: React.FC = () => {
              <div className="bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 flex items-center gap-3">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                 <span className="text-xs font-black text-slate-800 tracking-tight">
-                  {activeProject?.userRole.toUpperCase()}: {state.currentUser.name}
+                  {activeProject?.userRole.toUpperCase()}: {currentUser?.name}
                 </span>
              </div>
            </div>
@@ -604,7 +603,7 @@ const App: React.FC = () => {
         <DecisionModal 
           decision={activeDecision}
           project={activeProject}
-          user={state.currentUser}
+          user={currentUser!}
           onSave={handleSaveDecision}
           onCancel={() => { setActiveDecision(null); setSelectedPreviewId(null); }}
           onDelete={(id) => setState(prev => ({...prev, decisions: prev.decisions.map(d => d.id === id ? {...d, deletedAt: Date.now()} : d)}))}
@@ -613,6 +612,15 @@ const App: React.FC = () => {
       )}
     </div>
   );
+
+  // Show spinner while Firebase resolves the session
+  if (currentUser === undefined) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen font-sans">

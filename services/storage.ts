@@ -1,163 +1,146 @@
-
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, firestoreDb } from './firebase';
 import { Decision, Project, Plan, User, UserRole } from '../types';
 
-const DB_KEY = 'groundsync_db_v2'; // Bumped version for new schema
+const DB_KEY = 'groundsync_db_v2';
 
-interface UserWithPassword extends User {
-  password: string;
-}
-
-interface DbState {
+interface LocalDbState {
   projects: Project[];
   plans: Plan[];
   decisions: Decision[];
-  currentUser: User;
-  users: UserWithPassword[];
-  isAuthenticated: boolean;
 }
 
-const DEFAULT_STATE: DbState = {
+const DEFAULT_LOCAL_STATE: LocalDbState = {
   projects: [],
   plans: [],
   decisions: [],
-  currentUser: {
-    id: 'demo',
-    name: 'Demo User',
-    email: 'demo@groundsync.com',
-    role: UserRole.BAULEITER
-  },
-  users: [
-    {
-      id: 'demo',
-      name: 'Demo User',
-      email: 'demo@groundsync.com',
-      password: 'password123',
-      role: UserRole.BAULEITER
-    }
-  ],
-  isAuthenticated: false
 };
 
 export const db = {
-  get: (): DbState => {
+  // --- Local data (projects/plans/decisions) — still in localStorage for now ---
+  get: (): LocalDbState => {
     const saved = localStorage.getItem(DB_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved);
-
-      // Migration: Add users array if missing
-      if (!parsed.users) {
-        parsed.users = [
-          {
-            id: 'demo',
-            name: 'Demo User',
-            email: 'demo@groundsync.com',
-            password: 'password123',
-            role: UserRole.BAULEITER
-          }
-        ];
-        // Preserve existing currentUser if it exists and add to users
-        if (parsed.currentUser && !parsed.users.find((u: UserWithPassword) => u.id === parsed.currentUser.id)) {
-          parsed.users.push({
-            ...parsed.currentUser,
-            password: 'password123' // Default password for migrated users
-          });
-        }
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          projects: parsed.projects || [],
+          plans: parsed.plans || [],
+          decisions: parsed.decisions || [],
+        };
+      } catch {
+        return DEFAULT_LOCAL_STATE;
       }
-
-      // Migration: Add isAuthenticated flag if missing
-      if (parsed.isAuthenticated === undefined) {
-        parsed.isAuthenticated = false; // Force re-login on first load
-      }
-
-      // Migration: Ensure required arrays exist
-      if (!parsed.projects) parsed.projects = [];
-      if (!parsed.plans) parsed.plans = [];
-      if (!parsed.decisions) parsed.decisions = [];
-
-      return parsed;
     }
-    return DEFAULT_STATE;
+    return DEFAULT_LOCAL_STATE;
   },
-  save: (state: DbState) => {
+
+  save: (state: LocalDbState) => {
     try {
       localStorage.setItem(DB_KEY, JSON.stringify(state));
     } catch (err) {
-      // Most commonly QuotaExceededError when storing base64 media.
-      // Don't crash the app; log so the UI can keep working.
       console.error('[db.save] Failed to persist state to localStorage.', err);
     }
   },
+
   reset: () => {
     localStorage.removeItem(DB_KEY);
     window.location.reload();
   },
-  authenticate: async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
-    // Simulate 1-second delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const state = db.get();
-    const user = state.users.find(u => u.email === email);
-
-    if (!user) {
-      return { success: false, error: 'Invalid email or password' };
+  // --- Auth — Firebase ---
+  authenticate: async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string; user?: User }> => {
+    try {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const user = await fetchUserProfile(credential.user);
+      return { success: true, user };
+    } catch (err: any) {
+      return { success: false, error: mapAuthError(err.code) };
     }
+  },
 
-    if (user.password !== password) {
-      return { success: false, error: 'Invalid email or password' };
+  register: async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    role: UserRole
+  ): Promise<{ success: boolean; error?: string; user?: User }> => {
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const displayName = `${firstName} ${lastName}`;
+      await updateProfile(credential.user, { displayName });
+
+      const user: User = {
+        id: credential.user.uid,
+        name: displayName,
+        email,
+        role,
+      };
+
+      await setDoc(doc(firestoreDb, 'users', credential.user.uid), user);
+      return { success: true, user };
+    } catch (err: any) {
+      return { success: false, error: mapAuthError(err.code) };
     }
-
-    // Update state with authenticated user
-    const updatedState: DbState = {
-      ...state,
-      currentUser: { id: user.id, name: user.name, email: user.email, role: user.role },
-      isAuthenticated: true
-    };
-    db.save(updatedState);
-
-    return { success: true, user: updatedState.currentUser };
   },
-  register: async (firstName: string, lastName: string, email: string, password: string, role: UserRole): Promise<{ success: boolean; error?: string; user?: User }> => {
-    // Simulate 1-second delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const state = db.get();
-
-    // Check if email already exists
-    if (state.users.find(u => u.email === email)) {
-      return { success: false, error: 'Email already registered' };
-    }
-
-    // Create new user
-    const newUser: UserWithPassword = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: `${firstName} ${lastName}`,
-      email,
-      password,
-      role
-    };
-
-    // Update state with new user and auto-authenticate
-    const updatedState: DbState = {
-      ...state,
-      users: [...state.users, newUser],
-      currentUser: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role },
-      isAuthenticated: true
-    };
-    db.save(updatedState);
-
-    return { success: true, user: updatedState.currentUser };
+  logout: async (): Promise<void> => {
+    await signOut(auth);
   },
-  logout: (): DbState => {
-    const state = db.get();
-    const updatedState: DbState = {
-      ...state,
-      isAuthenticated: false
-    };
-    db.save(updatedState);
-    return updatedState;
+
+  onAuthStateChanged: (callback: (user: User | null) => void): (() => void) => {
+    return firebaseOnAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        callback(null);
+        return;
+      }
+      const user = await fetchUserProfile(firebaseUser);
+      callback(user);
+    });
   },
-  findUserByEmail: (email: string): UserWithPassword | undefined => {
-    const state = db.get();
-    return state.users.find(u => u.email === email);
-  }
 };
+
+async function fetchUserProfile(firebaseUser: FirebaseUser): Promise<User> {
+  const snap = await getDoc(doc(firestoreDb, 'users', firebaseUser.uid));
+  if (snap.exists()) {
+    return snap.data() as User;
+  }
+  // Fallback if Firestore doc is missing
+  return {
+    id: firebaseUser.uid,
+    name: firebaseUser.displayName || firebaseUser.email || 'Unknown',
+    email: firebaseUser.email || '',
+    role: UserRole.BAULEITER,
+  };
+}
+
+function mapAuthError(code: string): string {
+  switch (code) {
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Invalid email or password';
+    case 'auth/email-already-in-use':
+      return 'Email already registered';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters';
+    case 'auth/invalid-email':
+      return 'Invalid email address';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please try again later.';
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+}
