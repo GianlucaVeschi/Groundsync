@@ -69,6 +69,11 @@ export const db = {
         parsed.isAuthenticated = false; // Force re-login on first load
       }
 
+      // Migration: Ensure required arrays exist
+      if (!parsed.projects) parsed.projects = [];
+      if (!parsed.plans) parsed.plans = [];
+      if (!parsed.decisions) parsed.decisions = [];
+
       return parsed;
     }
     return DEFAULT_STATE;
