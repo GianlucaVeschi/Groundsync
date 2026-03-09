@@ -6,7 +6,7 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, firestoreDb } from './firebase';
 import { Decision, Project, Plan, User, UserRole } from '../types';
 
@@ -14,12 +14,10 @@ const DB_KEY = 'groundsync_db_v2';
 
 interface LocalDbState {
   plans: Plan[];
-  decisions: Decision[];
 }
 
 const DEFAULT_LOCAL_STATE: LocalDbState = {
   plans: [],
-  decisions: [],
 };
 
 export const db = {
@@ -31,7 +29,6 @@ export const db = {
         const parsed = JSON.parse(saved);
         return {
           plans: parsed.plans || [],
-          decisions: parsed.decisions || [],
         };
       } catch {
         return DEFAULT_LOCAL_STATE;
@@ -131,6 +128,33 @@ export const projectsService = {
       ownerId: ownerUid,     // rules: create requires ownerId == auth.uid
       memberIds: [ownerUid], // rules: create requires auth.uid in memberIds
     });
+  },
+};
+
+export const decisionsService = {
+  subscribe: (projectId: string, callback: (decisions: Decision[]) => void): (() => void) => {
+    const q = query(
+      collection(firestoreDb, 'decisions'),
+      where('projectId', '==', projectId)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const decisions = snapshot.docs.map(d => {
+        const { createdBy: _cb, ...data } = d.data();
+        return { ...data, id: d.id } as Decision;
+      });
+      callback(decisions);
+    });
+  },
+
+  create: async (decision: Decision): Promise<void> => {
+    await setDoc(doc(firestoreDb, 'decisions', decision.id), {
+      ...decision,
+      createdBy: decision.creatorId, // required by security rules
+    });
+  },
+
+  update: async (id: string, changes: Partial<Decision>): Promise<void> => {
+    await updateDoc(doc(firestoreDb, 'decisions', id), changes as Record<string, any>);
   },
 };
 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Project, Plan, Decision, UserRole, PhaseHOAI } from './types';
-import { db, projectsService } from './services/storage';
+import { db, projectsService, decisionsService } from './services/storage';
 import { PlanCanvas } from './components/PlanCanvas';
 import { DecisionModal } from './components/DecisionModal';
 import { AuthLandingScreen } from './components/AuthLandingScreen';
@@ -18,6 +18,7 @@ const App: React.FC = () => {
   // undefined = auth loading, null = signed out, User = signed in
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [decisions, setDecisions] = useState<Decision[]>([]);
   const [state, setState] = useState(db.get());
   const [view, setView] = useState<ViewState>('auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -55,6 +56,16 @@ const App: React.FC = () => {
     const unsubscribe = projectsService.subscribe(currentUser.id, setProjects);
     return unsubscribe;
   }, [currentUser]);
+
+  // Firestore decisions subscription — scoped to active project (includes mobile decisions)
+  useEffect(() => {
+    if (!activeProjectId) {
+      setDecisions([]);
+      return;
+    }
+    const unsubscribe = decisionsService.subscribe(activeProjectId, setDecisions);
+    return unsubscribe;
+  }, [activeProjectId]);
 
   // Keyboard shortcut for pin placement mode (P key) - only in plan view
   useEffect(() => {
@@ -95,9 +106,11 @@ const App: React.FC = () => {
     [state.plans, activePlanId]
   );
 
-  const planDecisions = useMemo(() => 
-    activePlanId ? state.decisions.filter(d => d.planId === activePlanId) : [],
-    [state.decisions, activePlanId]
+  // Filter decisions to the active plan for pin placement on canvas
+  // (mobile decisions have no planId — they appear in lists but not as pins)
+  const planDecisions = useMemo(() =>
+    decisions.filter(d => d.planId === activePlanId),
+    [decisions, activePlanId]
   );
 
   const handleSelectDecisionFromCanvas = (decisionId: string | null) => {
@@ -165,41 +178,39 @@ const App: React.FC = () => {
     });
   };
 
-  const handleSaveDecision = (data: Partial<Decision>) => {
+  const handleSaveDecision = async (data: Partial<Decision>) => {
     if (activeDecision?.id) {
-      setState(prev => ({
-        ...prev,
-        decisions: prev.decisions.map(d => 
-          d.id === activeDecision.id 
-          ? { ...d, ...data, history: [...d.history, { 
-              id: Math.random().toString(), 
-              userId: currentUser!.id,
-              userName: currentUser!.name,
-              timestamp: Date.now(), 
-              changes: [{ field: 'text', oldValue: d.text, newValue: data.text }] 
-            }]} 
-          : d
-        )
-      }));
+      const existing = decisions.find(d => d.id === activeDecision.id);
+      await decisionsService.update(activeDecision.id, {
+        ...data,
+        history: [
+          ...(existing?.history || []),
+          {
+            id: Math.random().toString(),
+            userId: currentUser!.id,
+            userName: currentUser!.name,
+            timestamp: Date.now(),
+            changes: [{ field: 'text', oldValue: existing?.text, newValue: data.text }]
+          }
+        ]
+      });
     } else {
       const projectShort = activeProject?.shortName || 'PRJ';
       const planShort = activePlan?.shortName || 'PLN';
-      const count = state.decisions.length + 1;
+      const count = decisions.length + 1;
       const humanId = `GS-${projectShort}-${planShort}-${count.toString().padStart(5, '0')}`;
-      
+
       const newDecision: Decision = {
         ...activeDecision as any,
         ...data,
-        id: Math.random().toString(),
+        id: Math.random().toString(36).substr(2, 9),
         humanId,
         status: 'Open',
         createdAt: Date.now()
       };
-      
-      setState(prev => ({
-        ...prev,
-        decisions: [...prev.decisions, newDecision]
-      }));
+
+      await decisionsService.create(newDecision);
+      // onSnapshot will update decisions state automatically
     }
     setActiveDecision(null);
   };
@@ -402,7 +413,6 @@ const App: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {projectPlans.map(p => {
-              const count = state.decisions.filter(d => d.planId === p.id && !d.deletedAt).length;
               return (
                 <div 
                   key={p.id} 
@@ -418,7 +428,7 @@ const App: React.FC = () => {
                     </div>
                     <h4 className="text-lg font-black text-slate-900 mb-1">{p.name}</h4>
                     <div className="flex items-center gap-4 mt-4 text-xs font-bold text-slate-400">
-                      <span className="flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> {count} {t('common:navigation.decisions')}</span>
+                      <span className="flex items-center gap-1"><i className="fa-solid fa-location-dot"></i> {t('common:navigation.decisions')}</span>
                     </div>
                   </div>
                 </div>
@@ -553,7 +563,7 @@ const App: React.FC = () => {
              <div className="bg-white/95 backdrop-blur-sm border shadow-xl rounded-full px-4 py-2 flex items-center gap-3">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
                 <span className="text-xs font-black text-slate-800 tracking-tight">
-                  {activeProject?.userRole.toUpperCase()}: {currentUser?.name}
+                  {activeProject?.userRole?.toUpperCase()}: {currentUser?.name}
                 </span>
              </div>
            </div>
@@ -578,7 +588,7 @@ const App: React.FC = () => {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-2">
-                {planDecisions.filter(d => !d.deletedAt).sort((a,b) => b.createdAt - a.createdAt).map(d => (
+                {decisions.filter(d => !d.deletedAt).sort((a,b) => b.createdAt - a.createdAt).map(d => (
                   <div 
                     key={d.id} 
                     className={`p-4 rounded-2xl cursor-pointer border transition-all mb-1 ${
@@ -618,8 +628,8 @@ const App: React.FC = () => {
           user={currentUser!}
           onSave={handleSaveDecision}
           onCancel={() => { setActiveDecision(null); setSelectedPreviewId(null); }}
-          onDelete={(id) => setState(prev => ({...prev, decisions: prev.decisions.map(d => d.id === id ? {...d, deletedAt: Date.now()} : d)}))}
-          onAcknowledge={(id) => setState(prev => ({...prev, decisions: prev.decisions.map(d => d.id === id ? {...d, status: 'Acknowledged'} : d)}))}
+          onDelete={(id) => decisionsService.update(id, { deletedAt: Date.now() })}
+          onAcknowledge={(id) => decisionsService.update(id, { status: 'Acknowledged', acknowledgedBy: currentUser!.id, acknowledgedAt: Date.now() })}
         />
       )}
     </div>

@@ -108,7 +108,7 @@ FIREBASE_APP_ID=
 
 ---
 
-### Phase 4 — Decisions in Firestore
+### ✅ Phase 4 — Decisions in Firestore
 
 **Goal:** Move decisions from localStorage to Firestore.
 
