@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Project, Plan, Decision, UserRole, PhaseHOAI } from './types';
-import { db } from './services/storage';
+import { db, projectsService } from './services/storage';
 import { PlanCanvas } from './components/PlanCanvas';
 import { DecisionModal } from './components/DecisionModal';
 import { AuthLandingScreen } from './components/AuthLandingScreen';
@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const { t, i18n } = useTranslation(['common', 'projects', 'decisions']);
   // undefined = auth loading, null = signed out, User = signed in
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [state, setState] = useState(db.get());
   const [view, setView] = useState<ViewState>('auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -45,6 +46,16 @@ const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  // Firestore projects subscription — scoped to current user
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setProjects([]);
+      return;
+    }
+    const unsubscribe = projectsService.subscribe(currentUser.id, setProjects);
+    return unsubscribe;
+  }, [currentUser]);
+
   // Keyboard shortcut for pin placement mode (P key) - only in plan view
   useEffect(() => {
     if (view !== 'plan-view') return;
@@ -69,9 +80,9 @@ const App: React.FC = () => {
   }, [view]);
 
   // --- Mappings ---
-  const activeProject = useMemo(() => 
-    state.projects.find(p => p.id === activeProjectId),
-    [state.projects, activeProjectId]
+  const activeProject = useMemo(() =>
+    projects.find(p => p.id === activeProjectId),
+    [projects, activeProjectId]
   );
 
   const projectPlans = useMemo(() => 
@@ -99,7 +110,7 @@ const App: React.FC = () => {
   };
 
   // --- Handlers ---
-  const handleCreateProject = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
@@ -113,7 +124,8 @@ const App: React.FC = () => {
       userRole: formData.get('userRole') as UserRole,
       categories: getDefaultCategories(i18n.language as 'en' | 'de')
     };
-    setState(prev => ({ ...prev, projects: [...prev.projects, newProject] }));
+    await projectsService.create(newProject, currentUser!.id);
+    // onSnapshot will update `projects` state automatically
     setShowCreateProject(false);
   };
 
@@ -255,14 +267,14 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {state.projects.length === 0 ? (
+        {projects.length === 0 ? (
           <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center">
             <i className="fa-solid fa-folder-open text-5xl text-slate-200 mb-4"></i>
             <p className="text-slate-600 font-bold text-lg">{t('projects:list.emptyState')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {state.projects.map(p => (
+            {projects.map(p => (
               <div 
                 key={p.id} 
                 onClick={() => { setActiveProjectId(p.id); setView('project-detail'); }}

@@ -85,7 +85,7 @@ FIREBASE_APP_ID=
 
 ---
 
-### Phase 3 — Projects in Firestore
+### ✅ Phase 3 — Projects in Firestore
 
 **Goal:** Move projects from localStorage to Firestore.
 
@@ -97,7 +97,8 @@ FIREBASE_APP_ID=
 ```
 {
   ...all Project fields from types.ts,
-  ownerUid: string   // ← new field, scopes to logged-in user
+  ownerId: string,      // ← Firebase UID of creator (required by security rules)
+  memberIds: string[],  // ← array of member UIDs (creator added automatically)
 }
 ```
 
@@ -195,9 +196,10 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == uid;
     }
     match /projects/{projectId} {
-      allow read, write: if request.auth != null
+      allow read, update, delete: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid;
     }
     match /plans/{planId} {
       allow read, write: if request.auth != null;

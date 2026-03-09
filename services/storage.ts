@@ -6,20 +6,18 @@ import {
   onAuthStateChanged as firebaseOnAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, firestoreDb } from './firebase';
 import { Decision, Project, Plan, User, UserRole } from '../types';
 
 const DB_KEY = 'groundsync_db_v2';
 
 interface LocalDbState {
-  projects: Project[];
   plans: Plan[];
   decisions: Decision[];
 }
 
 const DEFAULT_LOCAL_STATE: LocalDbState = {
-  projects: [],
   plans: [],
   decisions: [],
 };
@@ -32,7 +30,6 @@ export const db = {
       try {
         const parsed = JSON.parse(saved);
         return {
-          projects: parsed.projects || [],
           plans: parsed.plans || [],
           decisions: parsed.decisions || [],
         };
@@ -112,12 +109,38 @@ export const db = {
   },
 };
 
+export const projectsService = {
+  // Query by memberIds so both owned and shared projects are returned
+  subscribe: (uid: string, callback: (projects: Project[]) => void): (() => void) => {
+    const q = query(
+      collection(firestoreDb, 'projects'),
+      where('memberIds', 'array-contains', uid)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const projects = snapshot.docs.map(d => {
+        const { ownerId: _oid, memberIds: _mids, ...data } = d.data();
+        return { ...data, id: d.id } as Project; // d.id is the authoritative document ID
+      });
+      callback(projects);
+    });
+  },
+
+  create: async (project: Project, ownerUid: string): Promise<void> => {
+    await setDoc(doc(firestoreDb, 'projects', project.id), {
+      ...project,
+      ownerId: ownerUid,     // rules: create requires ownerId == auth.uid
+      memberIds: [ownerUid], // rules: create requires auth.uid in memberIds
+    });
+  },
+};
+
 async function fetchUserProfile(firebaseUser: FirebaseUser): Promise<User> {
   const snap = await getDoc(doc(firestoreDb, 'users', firebaseUser.uid));
   if (snap.exists()) {
-    return snap.data() as User;
+    // Always override id from the Firebase UID — never trust the stored field
+    return { ...snap.data(), id: firebaseUser.uid } as User;
   }
-  // Fallback if Firestore doc is missing
+  // Fallback if Firestore doc is missing (e.g. user created before Phase 2)
   return {
     id: firebaseUser.uid,
     name: firebaseUser.displayName || firebaseUser.email || 'Unknown',
