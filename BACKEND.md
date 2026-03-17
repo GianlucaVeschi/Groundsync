@@ -169,7 +169,7 @@ decisions/{decisionId}/{mediaId}.jpg
 
 ---
 
-### Phase 7 — Cleanup
+### ✅ Phase 7 — Cleanup
 
 **Goal:** Remove all remaining localStorage code.
 
