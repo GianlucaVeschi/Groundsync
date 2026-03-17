@@ -130,7 +130,7 @@ FIREBASE_APP_ID=
 
 ---
 
-### Phase 5 — Plans in Firestore
+### ✅ Phase 5 — Plans in Firestore
 
 **Goal:** Move plan metadata to Firestore. PDF data stays as base64 in Firestore temporarily.
 
@@ -150,7 +150,7 @@ FIREBASE_APP_ID=
 
 ---
 
-### Phase 6 — PDF and Image Storage
+### ✅ Phase 6 — PDF and Image Storage
 
 **Goal:** Move PDFs and images from base64 strings in Firestore to Firebase Storage.
 

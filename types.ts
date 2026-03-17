@@ -33,7 +33,8 @@ export interface Plan {
   projectId: string;
   name: string;
   shortName: string;
-  pdfData: string; // Base64 encoded PDF data
+  pdfUrl: string;
+  createdBy: string;
 }
 
 export interface DecisionMedia {

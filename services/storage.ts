@@ -10,46 +10,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot } 
 import { auth, firestoreDb } from './firebase';
 import { Decision, Project, Plan, User, UserRole } from '../types';
 
-const DB_KEY = 'groundsync_db_v2';
-
-interface LocalDbState {
-  plans: Plan[];
-}
-
-const DEFAULT_LOCAL_STATE: LocalDbState = {
-  plans: [],
-};
-
 export const db = {
-  // --- Local data (projects/plans/decisions) — still in localStorage for now ---
-  get: (): LocalDbState => {
-    const saved = localStorage.getItem(DB_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          plans: parsed.plans || [],
-        };
-      } catch {
-        return DEFAULT_LOCAL_STATE;
-      }
-    }
-    return DEFAULT_LOCAL_STATE;
-  },
-
-  save: (state: LocalDbState) => {
-    try {
-      localStorage.setItem(DB_KEY, JSON.stringify(state));
-    } catch (err) {
-      console.error('[db.save] Failed to persist state to localStorage.', err);
-    }
-  },
-
-  reset: () => {
-    localStorage.removeItem(DB_KEY);
-    window.location.reload();
-  },
-
   // --- Auth — Firebase ---
   authenticate: async (
     email: string,
@@ -155,6 +116,23 @@ export const decisionsService = {
 
   update: async (id: string, changes: Partial<Decision>): Promise<void> => {
     await updateDoc(doc(firestoreDb, 'decisions', id), changes as Record<string, any>);
+  },
+};
+
+export const plansService = {
+  subscribe: (projectId: string, callback: (plans: Plan[]) => void): (() => void) => {
+    const q = query(
+      collection(firestoreDb, 'plans'),
+      where('projectId', '==', projectId)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const plans = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Plan));
+      callback(plans);
+    });
+  },
+
+  create: async (plan: Plan): Promise<void> => {
+    await setDoc(doc(firestoreDb, 'plans', plan.id), plan);
   },
 };
 

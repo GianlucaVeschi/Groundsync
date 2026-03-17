@@ -7,7 +7,7 @@ const ZOOM_STEP = 1.4;
 const DEFAULT_HOME_SCALE = 0.8 / (ZOOM_STEP * ZOOM_STEP); // same as clicking "Zoom Out" twice
 
 interface PlanCanvasProps {
-  pdfData: string;
+  pdfUrl: string;
   decisions: Decision[];
   onAddDecision: (x: number, y: number) => void;
   selectedDecisionId?: string | null;
@@ -20,7 +20,7 @@ interface PlanCanvasProps {
 }
 
 export const PlanCanvas: React.FC<PlanCanvasProps> = ({
-  pdfData,
+  pdfUrl,
   decisions,
   onAddDecision,
   selectedDecisionId,
@@ -68,9 +68,11 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
     let renderTask: any = null;
 
     const renderPdf = async () => {
-      if (!pdfData || !canvasRef.current) return;
+      if (!pdfUrl || !canvasRef.current) return;
       try {
-        const loadingTask = (window as any).pdfjsLib.getDocument({ data: atob(pdfData.split(',')[1]) });
+        const response = await fetch(pdfUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const loadingTask = (window as any).pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
         const pdf = await loadingTask.promise;
 
         if (isCancelled) return;
@@ -101,8 +103,8 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
           // Save an initial "home" view per PDF so recenter is deterministic.
           // This intentionally uses a simple, safe default (top-left at 0,0)
           // rather than trying to auto-fit/center (which can be fragile).
-          if (initialTransformPdfRef.current !== pdfData) {
-            initialTransformPdfRef.current = pdfData;
+          if (initialTransformPdfRef.current !== pdfUrl) {
+            initialTransformPdfRef.current = pdfUrl;
             initialTransformRef.current = { x: 0, y: 0, scale: DEFAULT_HOME_SCALE };
             setTransform(initialTransformRef.current);
           }
@@ -126,7 +128,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
         }
       }
     };
-  }, [pdfData]);
+  }, [pdfUrl]);
 
   // Handle zoom triggers from parent
   useEffect(() => {

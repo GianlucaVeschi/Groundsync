@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Decision, Project, User, UserRole } from '../types';
 import { translateCategory } from '../locales/categoryMapping';
+import { storage } from '../services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface DecisionModalProps {
   decision: Partial<Decision>;
@@ -101,10 +103,17 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
     if (formData.media.length >= 3) return;
 
     try {
-      const url = await compressImageToDataUrl(file);
+      const dataUrl = await compressImageToDataUrl(file);
+      const mediaId = Math.random().toString(36).substr(2, 9);
+
+      const blob = await fetch(dataUrl).then(r => r.blob());
+      const storageRef = ref(storage, `decision-media/${mediaId}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const url = await getDownloadURL(storageRef);
+
       setFormData(prev => ({
         ...prev,
-        media: [...prev.media, { id: Math.random().toString(), type: 'image', url }]
+        media: [...prev.media, { id: mediaId, type: 'image', url }]
       }));
     } catch (err) {
       console.error('Image upload failed:', err);

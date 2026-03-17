@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Project, Plan, Decision, UserRole, PhaseHOAI } from './types';
-import { db, projectsService, decisionsService } from './services/storage';
+import { db, projectsService, decisionsService, plansService } from './services/storage';
+import { storage } from './services/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { PlanCanvas } from './components/PlanCanvas';
 import { DecisionModal } from './components/DecisionModal';
 import { AuthLandingScreen } from './components/AuthLandingScreen';
@@ -19,7 +21,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [projects, setProjects] = useState<Project[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
-  const [state, setState] = useState(db.get());
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [view, setView] = useState<ViewState>('auth-landing');
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
@@ -33,10 +35,7 @@ const App: React.FC = () => {
   const [zoomInTrigger, setZoomInTrigger] = useState(0);
   const [zoomOutTrigger, setZoomOutTrigger] = useState(0);
   const [recenterTrigger, setRecenterTrigger] = useState(0);
-
-  useEffect(() => {
-    db.save(state);
-  }, [state]);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Firebase auth state listener — drives navigation
   useEffect(() => {
@@ -64,6 +63,16 @@ const App: React.FC = () => {
       return;
     }
     const unsubscribe = decisionsService.subscribe(activeProjectId, setDecisions);
+    return unsubscribe;
+  }, [activeProjectId]);
+
+  // Firestore plans subscription — scoped to active project
+  useEffect(() => {
+    if (!activeProjectId) {
+      setPlans([]);
+      return;
+    }
+    const unsubscribe = plansService.subscribe(activeProjectId, setPlans);
     return unsubscribe;
   }, [activeProjectId]);
 
@@ -96,14 +105,14 @@ const App: React.FC = () => {
     [projects, activeProjectId]
   );
 
-  const projectPlans = useMemo(() => 
-    state.plans.filter(p => p.projectId === activeProjectId),
-    [state.plans, activeProjectId]
+  const projectPlans = useMemo(() =>
+    plans.filter(p => p.projectId === activeProjectId),
+    [plans, activeProjectId]
   );
 
-  const activePlan = useMemo(() => 
-    state.plans.find(p => p.id === activePlanId),
-    [state.plans, activePlanId]
+  const activePlan = useMemo(() =>
+    plans.find(p => p.id === activePlanId),
+    [plans, activePlanId]
   );
 
   // Filter decisions to the active plan for pin placement on canvas
@@ -142,22 +151,41 @@ const App: React.FC = () => {
     setShowCreateProject(false);
   };
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === 'application/pdf' && activeProjectId) {
       setIsUploading(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        const newPlan: Plan = {
-          id: Math.random().toString(36).substr(2, 9),
-          projectId: activeProjectId,
-          name: file.name.replace('.pdf', ''),
-          shortName: file.name.substring(0, 3).toUpperCase(),
-          pdfData: base64
-        };
-        setState(prev => ({ ...prev, plans: [...prev.plans, newPlan] }));
-        setIsUploading(false);
+      reader.onloadend = async () => {
+        try {
+          const dataUrl = reader.result as string;
+          const planId = Math.random().toString(36).substr(2, 9);
+
+          const blob = await fetch(dataUrl).then(r => r.blob());
+          const storageRef = ref(storage, `plans/${activeProjectId}/${planId}.pdf`);
+          await uploadBytes(storageRef, blob);
+          const pdfUrl = await getDownloadURL(storageRef);
+
+          await plansService.create({
+            id: planId,
+            projectId: activeProjectId,
+            name: file.name.replace('.pdf', ''),
+            shortName: file.name.substring(0, 3).toUpperCase(),
+            pdfUrl,
+            createdBy: currentUser!.id,
+          });
+          showToast(`"${file.name}" uploaded successfully.`, 'success');
+        } catch (err) {
+          console.error('PDF upload failed:', err);
+          showToast('Upload failed. Please try again.', 'error');
+        } finally {
+          setIsUploading(false);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -475,7 +503,7 @@ const App: React.FC = () => {
         <div className="flex-1 relative min-w-0">
           {activePlan && (
             <PlanCanvas
-              pdfData={activePlan.pdfData}
+              pdfUrl={activePlan.pdfUrl}
               decisions={planDecisions}
               selectedDecisionId={selectedPreviewId}
               onAddDecision={handleAddDecision}
@@ -651,6 +679,11 @@ const App: React.FC = () => {
       {view === 'projects' && renderProjectsView()}
       {view === 'project-detail' && renderProjectDetail()}
       {view === 'plan-view' && renderPlanView()}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl shadow-lg text-white text-sm font-medium transition-all z-50 ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {toast.type === 'success' ? '✓' : '✕'} {toast.message}
+        </div>
+      )}
     </div>
   );
 };
