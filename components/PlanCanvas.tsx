@@ -38,6 +38,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
   const [canvasReady, setCanvasReady] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [touchPoints, setTouchPoints] = useState<TouchList | null>(null);
   const [initialDistance, setInitialDistance] = useState<number | null>(null);
   const [touchStartTime, setTouchStartTime] = useState<number>(0);
@@ -90,6 +91,7 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        setCanvasSize({ width: viewport.width, height: viewport.height });
 
         renderTask = page.render({
           canvasContext: context,
@@ -357,43 +359,37 @@ export const PlanCanvas: React.FC<PlanCanvasProps> = ({
         className="relative inline-block"
       >
         <canvas ref={canvasRef} className="shadow-2xl bg-white" />
-        
-        {/* PINS LAYER */}
-        <div className="absolute inset-0 pointer-events-none">
-          {decisions.filter(d => !d.deletedAt).map(decision => {
-            const isHighlighted = decision.id === selectedDecisionId;
-            return (
-              <div 
-                key={decision.id}
-                className="absolute"
-                style={{ 
-                  left: `${decision.x * 100}%`, 
-                  top: `${decision.y * 100}%`,
-                  zIndex: isHighlighted ? 100 : 50,
-                  // Keep pins fixed size despite map scale
-                  transform: `scale(${1/transform.scale})`
+      </div>
+
+      {/* PINS LAYER — in container space, not inside the scaled div */}
+      <div className="absolute inset-0 pointer-events-none">
+        {decisions.filter(d => !d.deletedAt).map(decision => {
+          const x = decision.x * canvasSize.width * transform.scale + transform.x;
+          const y = decision.y * canvasSize.height * transform.scale + transform.y;
+          const isHighlighted = decision.id === selectedDecisionId;
+          return (
+            <div
+              key={decision.id}
+              className="absolute"
+              style={{ left: `${x}px`, top: `${y}px`, zIndex: isHighlighted ? 100 : 50 }}
+            >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectDecision(decision.id);
                 }}
+                className={`
+                  w-8 h-8 rounded-full border-2 border-white shadow-xl -translate-x-1/2 -translate-y-full
+                  flex items-center justify-center transition-all pointer-events-auto
+                  ${isHighlighted ? 'bg-blue-600 ring-4 ring-blue-400/50' :
+                    (decision.status === 'Acknowledged' ? 'bg-green-600' : 'bg-orange-500')}
+                `}
               >
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectDecision(decision.id);
-                    }}
-                    className={`
-                      w-8 h-8 rounded-full border-2 border-white shadow-xl -translate-x-1/2 -translate-y-full
-                      flex items-center justify-center transition-all pointer-events-auto
-                      ${isHighlighted ? 'bg-blue-600 ring-4 ring-blue-400/50' : 
-                        (decision.status === 'Acknowledged' ? 'bg-green-600' : 'bg-orange-500')}
-                    `}
-                  >
-                    <i className="fa-solid fa-location-dot text-sm text-white"></i>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                <i className="fa-solid fa-location-dot text-sm text-white"></i>
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
