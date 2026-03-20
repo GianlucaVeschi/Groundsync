@@ -54,6 +54,8 @@
     "acknowledged": "Decision acknowledged successfully"
   },
   "errors": {
-    "saveFailed": "Failed to save decision. Please try again."
+    "saveFailed": "Failed to save decision. Please try again.",
+    "deleteSuccess": "Decision deleted.",
+    "deleteFailed": "Failed to delete decision. Please try again."
   }
 }

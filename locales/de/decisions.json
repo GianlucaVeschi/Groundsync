@@ -54,6 +54,8 @@
     "acknowledged": "Entscheidung erfolgreich bestätigt"
   },
   "errors": {
-    "saveFailed": "Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen."
+    "saveFailed": "Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "deleteSuccess": "Entscheidung gelöscht.",
+    "deleteFailed": "Entscheidung konnte nicht gelöscht werden. Bitte erneut versuchen."
   }
 }

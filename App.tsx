@@ -248,6 +248,18 @@ const App: React.FC = () => {
     setActiveDecision(null);
   };
 
+  const handleDeleteDecision = async (id: string) => {
+    try {
+      await decisionsService.update(id, { deletedAt: Date.now() });
+      setActiveDecision(null);
+      setSelectedPreviewId(null);
+      showToast(t('decisions:errors.deleteSuccess'), 'success');
+    } catch (err) {
+      console.error('Failed to delete decision:', err);
+      showToast(t('decisions:errors.deleteFailed'), 'error');
+    }
+  };
+
   const handleDecisionListSelect = (decision: Decision) => {
     setActiveDecision(decision);
     setSelectedPreviewId(decision.id);
@@ -336,7 +348,7 @@ const App: React.FC = () => {
           onRecenter={() => setRecenterTrigger(prev => prev + 1)}
           onSaveDecision={handleSaveDecision}
           onCancelDecision={() => { setActiveDecision(null); setSelectedPreviewId(null); }}
-          onDeleteDecision={(id) => decisionsService.update(id, { deletedAt: Date.now() })}
+          onDeleteDecision={handleDeleteDecision}
           onAcknowledgeDecision={(id) => decisionsService.update(id, { status: 'Acknowledged', acknowledgedBy: currentUser!.id, acknowledgedAt: Date.now() })}
           onDecisionListSelect={handleDecisionListSelect}
           onLogout={handleLogout}
