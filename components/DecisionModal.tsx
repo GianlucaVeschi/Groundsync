@@ -27,7 +27,7 @@ export const DecisionModal: React.FC<DecisionModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation(['decisions', 'common']);
   const [formData, setFormData] = useState({
-    category: decision.category || project.categories[0],
+    category: decision.category || project.categories?.[0] || '',
     text: decision.text || '',
     media: decision.media || []
   });

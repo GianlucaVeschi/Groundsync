@@ -52,5 +52,8 @@
     "updated": "Decision updated successfully",
     "deleted": "Decision deleted successfully",
     "acknowledged": "Decision acknowledged successfully"
+  },
+  "errors": {
+    "saveFailed": "Failed to save decision. Please try again."
   }
 }

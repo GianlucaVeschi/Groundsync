@@ -197,7 +197,7 @@ const App: React.FC = () => {
       projectId: activeProjectId,
       planId: activePlanId,
       creatorId: currentUser!.id,
-      creatorName: currentUser!.name,
+      creatorName: currentUser!.name || currentUser!.email || 'Unknown',
       x,
       y,
       media: [],
@@ -207,38 +207,44 @@ const App: React.FC = () => {
   };
 
   const handleSaveDecision = async (data: Partial<Decision>) => {
-    if (activeDecision?.id) {
-      const existing = decisions.find(d => d.id === activeDecision.id);
-      await decisionsService.update(activeDecision.id, {
-        ...data,
-        history: [
-          ...(existing?.history || []),
-          {
-            id: Math.random().toString(),
-            userId: currentUser!.id,
-            userName: currentUser!.name,
-            timestamp: Date.now(),
-            changes: [{ field: 'text', oldValue: existing?.text, newValue: data.text }]
-          }
-        ]
-      });
-    } else {
-      const projectShort = activeProject?.shortName || 'PRJ';
-      const planShort = activePlan?.shortName || 'PLN';
-      const count = decisions.length + 1;
-      const humanId = `GS-${projectShort}-${planShort}-${count.toString().padStart(5, '0')}`;
+    try {
+      if (activeDecision?.id) {
+        const existing = decisions.find(d => d.id === activeDecision.id);
+        await decisionsService.update(activeDecision.id, {
+          ...data,
+          history: [
+            ...(existing?.history || []),
+            {
+              id: Math.random().toString(),
+              userId: currentUser!.id,
+              userName: currentUser!.name,
+              timestamp: Date.now(),
+              changes: [{ field: 'text', oldValue: existing?.text, newValue: data.text }]
+            }
+          ]
+        });
+      } else {
+        const projectShort = activeProject?.shortName || 'PRJ';
+        const planShort = activePlan?.shortName || 'PLN';
+        const count = decisions.length + 1;
+        const humanId = `GS-${projectShort}-${planShort}-${count.toString().padStart(5, '0')}`;
 
-      const newDecision: Decision = {
-        ...activeDecision as any,
-        ...data,
-        id: Math.random().toString(36).substr(2, 9),
-        humanId,
-        status: 'Open',
-        createdAt: Date.now()
-      };
+        const newDecision: Decision = {
+          ...activeDecision as any,
+          ...data,
+          id: Math.random().toString(36).substr(2, 9),
+          humanId,
+          status: 'Open',
+          createdAt: Date.now()
+        };
 
-      await decisionsService.create(newDecision);
-      // onSnapshot will update decisions state automatically
+        await decisionsService.create(newDecision);
+        // onSnapshot will update decisions state automatically
+      }
+    } catch (err) {
+      console.error('Failed to save decision:', err);
+      showToast(t('decisions:errors.saveFailed'), 'error');
+      return; // don't clear activeDecision — let user retry
     }
     setActiveDecision(null);
   };

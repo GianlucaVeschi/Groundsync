@@ -52,5 +52,8 @@
     "updated": "Entscheidung erfolgreich aktualisiert",
     "deleted": "Entscheidung erfolgreich gelöscht",
     "acknowledged": "Entscheidung erfolgreich bestätigt"
+  },
+  "errors": {
+    "saveFailed": "Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen."
   }
 }

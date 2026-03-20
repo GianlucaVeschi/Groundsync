@@ -9,6 +9,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, firestoreDb } from './firebase';
 import { Decision, Project, Plan, User, UserRole } from '../types';
+import { getDefaultCategories } from '../locales/categoryMapping';
 
 export const db = {
   // --- Auth — Firebase ---
@@ -77,7 +78,10 @@ export const projectsService = {
     return onSnapshot(q, (snapshot) => {
       const projects = snapshot.docs.map(d => {
         const { ownerId: _oid, memberIds: _mids, ...data } = d.data();
-        return { ...data, id: d.id } as Project; // d.id is the authoritative document ID
+        const categories = Array.isArray(data.categories) && data.categories.length > 0
+          ? data.categories
+          : getDefaultCategories('en');
+        return { ...data, categories, id: d.id } as Project;
       });
       callback(projects);
     });
@@ -104,14 +108,17 @@ export const decisionsService = {
         return { ...data, id: d.id } as Decision;
       });
       callback(decisions);
+    }, (err) => {
+      console.error('decisions subscription error:', err);
     });
   },
 
   create: async (decision: Decision): Promise<void> => {
-    await setDoc(doc(firestoreDb, 'decisions', decision.id), {
+    const payload = JSON.parse(JSON.stringify({
       ...decision,
       createdBy: decision.creatorId, // required by security rules
-    });
+    }));
+    await setDoc(doc(firestoreDb, 'decisions', decision.id), payload);
   },
 
   update: async (id: string, changes: Partial<Decision>): Promise<void> => {
