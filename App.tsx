@@ -279,27 +279,23 @@ const App: React.FC = () => {
   const renderProjectsView = () => (
     <div className="flex flex-col h-full bg-slate-50 p-6 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full">
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{t('projects:list.title')}</h1>
             <p className="text-slate-500 mt-1">{t('projects:list.subtitle')}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <LanguageSwitcher />
-            <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs font-bold text-slate-600">{currentUser?.name}</span>
-            </div>
             <button
               onClick={() => setShowCreateProject(true)}
-              className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+              className="bg-blue-600 text-white font-bold py-2.5 px-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-sm"
             >
               <i className="fa-solid fa-plus"></i>
               {t('projects:list.createButton')}
             </button>
             <button
               onClick={handleLogout}
-              className="bg-white border text-slate-600 font-bold py-3 px-4 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
+              className="bg-white border text-slate-600 font-bold py-2.5 px-3 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
             >
               <i className="fa-solid fa-right-from-bracket"></i>
             </button>
@@ -390,20 +386,16 @@ const App: React.FC = () => {
   const renderProjectDetail = () => (
     <div className="flex flex-col h-full bg-slate-50 p-6 overflow-y-auto">
       <div className="max-w-4xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-6">
-          <button onClick={() => setView('projects')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors">
+        <div className="flex justify-between items-center mb-6 gap-2">
+          <button onClick={() => setView('projects')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors shrink-0">
             <i className="fa-solid fa-arrow-left"></i>
             {t('common:buttons.back')}
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <LanguageSwitcher />
-            <div className="bg-white border shadow-sm rounded-2xl px-4 py-2 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-xs font-bold text-slate-600">{currentUser?.name}</span>
-            </div>
             <button
               onClick={handleLogout}
-              className="bg-white border text-slate-600 font-bold py-2 px-4 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
+              className="bg-white border text-slate-600 font-bold py-2 px-3 rounded-2xl shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center gap-2"
             >
               <i className="fa-solid fa-right-from-bracket"></i>
             </button>
